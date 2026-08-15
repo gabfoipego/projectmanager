@@ -96,6 +96,17 @@ def humanize_dt(value):
     return f"há {days // 30}m"
 
 
+AUTH_ERROR_HINTS = (
+    "bad credentials", "unauthorized", "unauthenticated", "401",
+    "invalid api key", "api key not valid", "não configurada",
+)
+
+
+def looks_like_auth_error(text):
+    low = text.lower()
+    return any(hint in low for hint in AUTH_ERROR_HINTS)
+
+
 def styled_entry(master, **kwargs):
     kwargs.setdefault("fg_color", BG3)
     kwargs.setdefault("border_color", BORDER)
@@ -365,11 +376,14 @@ class ImportReposDialog(ctk.CTkToplevel):
         token = db.get_setting("github_token", "")
         if not token:
             ctk.CTkLabel(self, text="Configure seu GitHub Token em Configurações primeiro.",
-                         font=FONT_BODY, text_color=WARNING).pack(padx=24, pady=20)
+                         font=FONT_BODY, text_color=WARNING).pack(padx=24, pady=(20, 8))
+            PrimaryButton(self, text="Abrir Configurações", font=FONT_SM,
+                          command=lambda: SettingsDialog(self, on_save=self.destroy)).pack(pady=(0, 20))
             return
         self.status_label = ctk.CTkLabel(self, text="Carregando repositórios...",
                                           font=FONT_BODY, text_color=TEXT2)
         self.status_label.pack(pady=8)
+        self.retry_btn = None
         search_frame = ctk.CTkFrame(self, fg_color="transparent")
         search_frame.pack(fill="x", padx=24, pady=(0, 8))
         self.search_var = tk.StringVar()
@@ -388,12 +402,29 @@ class ImportReposDialog(ctk.CTkToplevel):
         PrimaryButton(btn_frame, text="Importar Selecionados", command=self._do_import).pack(side="right")
         threading.Thread(target=self._load_repos, args=(token,), daemon=True).start()
 
+    def _reopen_settings(self):
+        SettingsDialog(self, on_save=self._retry_with_new_token)
+
+    def _retry_with_new_token(self):
+        if self.retry_btn:
+            self.retry_btn.destroy()
+            self.retry_btn = None
+        self.status_label.configure(text="Carregando repositórios...", text_color=TEXT2)
+        token = db.get_setting("github_token", "")
+        threading.Thread(target=self._load_repos, args=(token,), daemon=True).start()
+
+    def _show_auth_error(self, message):
+        self.status_label.configure(text=f"Erro: {message}", text_color=DANGER)
+        self.retry_btn = PrimaryButton(self, text="Atualizar Token", font=FONT_SM,
+                                        command=self._reopen_settings)
+        self.retry_btn.pack(pady=(0, 8))
+
     def _load_repos(self, token):
         try:
             client = GitHubClient(token)
             ok, info = client.test_auth()
             if not ok:
-                self.after(0, lambda: self.status_label.configure(text=f"Erro: {info}", text_color=DANGER))
+                self.after(0, lambda: self._show_auth_error(info))
                 return
             repos = client.get_repos()
             self.repos = [client.format_repo(r) for r in repos]
@@ -835,14 +866,23 @@ class AIPanel(ctk.CTkFrame):
                         text_color=SUCCESS, height=28, font=FONT_SM,
                         command=add_tasks).pack(padx=14, pady=(0, 10), anchor="w")
 
+    def _attach_settings_button(self, bubble):
+        SecondaryButton(bubble, text="Abrir Configurações", hover_color=WARNING,
+                        text_color=WARNING, height=28, font=FONT_SM,
+                        command=lambda: SettingsDialog(self, on_save=lambda: None)
+                        ).pack(padx=14, pady=(0, 10), anchor="w")
+
     def _render_message(self, role, content):
         bubble = self._new_bubble(role)
         ctk.CTkLabel(bubble, text=content, font=FONT_BODY, text_color=TEXT,
                      wraplength=440, justify="left", anchor="w").pack(padx=14, pady=10, fill="x")
-        if role == "assistant" and "- " in content:
-            tasks = ai.parse_ai_tasks(content)
-            if tasks:
-                self._attach_task_button(bubble, tasks)
+        if role == "assistant":
+            if looks_like_auth_error(content):
+                self._attach_settings_button(bubble)
+            elif "- " in content:
+                tasks = ai.parse_ai_tasks(content)
+                if tasks:
+                    self._attach_task_button(bubble, tasks)
         return bubble
 
     def _scroll_bottom(self):
@@ -877,9 +917,12 @@ class AIPanel(ctk.CTkFrame):
                 self.after(0, self._scroll_bottom)
             self.after(0, lambda: resp_label.configure(text=full_response))
             db.add_chat_message(self.project["id"], "assistant", full_response)
-            parsed = ai.parse_ai_tasks(full_response)
-            if parsed:
-                self.after(0, lambda: self._attach_task_button(ai_bubble, parsed))
+            if looks_like_auth_error(full_response):
+                self.after(0, lambda: self._attach_settings_button(ai_bubble))
+            else:
+                parsed = ai.parse_ai_tasks(full_response)
+                if parsed:
+                    self.after(0, lambda: self._attach_task_button(ai_bubble, parsed))
             self.after(0, lambda: self.send_btn.configure(state="normal", text="Enviar →"))
             self.after(0, self._scroll_bottom)
         threading.Thread(target=stream, daemon=True).start()
