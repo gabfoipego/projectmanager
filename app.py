@@ -96,15 +96,12 @@ def humanize_dt(value):
     return f"há {days // 30}m"
 
 
-AUTH_ERROR_HINTS = (
-    "bad credentials", "unauthorized", "unauthenticated", "401",
-    "invalid api key", "api key not valid", "não configurada",
-)
-
-
-def looks_like_auth_error(text):
-    low = text.lower()
-    return any(hint in low for hint in AUTH_ERROR_HINTS)
+def safe_grab(widget):
+    if widget.winfo_exists():
+        try:
+            widget.grab_set()
+        except tk.TclError:
+            pass
 
 
 def styled_entry(master, **kwargs):
@@ -256,7 +253,7 @@ class AddTaskDialog(ctk.CTkToplevel):
         self.geometry("480x400")
         self.configure(fg_color=BG2)
         self.resizable(False, False)
-        self.after(100, self.grab_set)
+        self.after(100, lambda: safe_grab(self))
         self.on_save = on_save
         ctk.CTkFrame(self, fg_color=ACCENT, height=3, corner_radius=0).pack(fill="x")
         ctk.CTkLabel(self, text="Nova Tarefa", font=FONT_H2, text_color=TEXT).pack(pady=(20, 4), padx=24, anchor="w")
@@ -295,7 +292,7 @@ class SettingsDialog(ctk.CTkToplevel):
         self.geometry("520x560")
         self.configure(fg_color=BG2)
         self.resizable(False, False)
-        self.after(100, self.grab_set)
+        self.after(100, lambda: safe_grab(self))
         self.on_save = on_save
         ctk.CTkFrame(self, fg_color=ACCENT, height=3, corner_radius=0).pack(fill="x")
         ctk.CTkLabel(self, text="Configurações", font=FONT_H2, text_color=TEXT).pack(pady=(20, 4), padx=24, anchor="w")
@@ -327,12 +324,21 @@ class SettingsDialog(ctk.CTkToplevel):
         self.ollama_frame = ctk.CTkFrame(self, fg_color="transparent")
         self.ollama_frame.pack(fill="x", padx=24)
         ctk.CTkLabel(self.ollama_frame, text="Modelo Ollama", font=FONT_SM, text_color=TEXT2).pack(anchor="w", pady=(8, 0))
-        self.ollama_model = styled_entry(self.ollama_frame, placeholder_text="phi3:mini", font=FONT_MONO)
-        self.ollama_model.pack(fill="x", pady=(2, 0))
-        saved_model = db.get_setting("ollama_model", "phi3:mini")
-        self.ollama_model.insert(0, saved_model)
-        ctk.CTkLabel(self.ollama_frame, text="Recomendados: phi3:mini, mistral, llama3.2:3b",
-                     font=FONT_SM, text_color=TEXT3).pack(anchor="w")
+        model_row = ctk.CTkFrame(self.ollama_frame, fg_color="transparent")
+        model_row.pack(fill="x", pady=(2, 0))
+        saved_model = ai.get_ollama_model()
+        self.ollama_model = ctk.CTkComboBox(model_row, values=[saved_model] if saved_model else [], fg_color=BG3,
+                                             border_color=BORDER, button_color=CARD2,
+                                             button_hover_color=ACCENT, dropdown_fg_color=BG3,
+                                             dropdown_hover_color=CARD2, text_color=TEXT,
+                                             font=FONT_MONO, height=38)
+        self.ollama_model.set(saved_model)
+        self.ollama_model.pack(side="left", fill="x", expand=True)
+        SecondaryButton(model_row, text="↻", width=38, height=38, font=FONT_SM,
+                        command=lambda: self._refresh_ollama_models()).pack(side="left", padx=(6, 0))
+        self.ollama_hint = ctk.CTkLabel(self.ollama_frame, text="Buscando modelos instalados...",
+                                         font=FONT_SM, text_color=TEXT3)
+        self.ollama_hint.pack(anchor="w")
         ctk.CTkLabel(self.ollama_frame, text="Ollama URL", font=FONT_SM, text_color=TEXT2).pack(anchor="w", pady=(8, 0))
         self.ollama_url = styled_entry(self.ollama_frame, placeholder_text="http://localhost:11434", font=FONT_MONO)
         self.ollama_url.pack(fill="x", pady=(2, 0))
@@ -350,12 +356,37 @@ class SettingsDialog(ctk.CTkToplevel):
         else:
             self.gemini_frame.pack_forget()
             self.ollama_frame.pack(fill="x", padx=24)
+            self._refresh_ollama_models(silent=True)
+
+    def _refresh_ollama_models(self, silent=False):
+        url = self.ollama_url.get().strip() or "http://localhost:11434"
+        self.ollama_hint.configure(text="Buscando modelos instalados...", text_color=TEXT3)
+
+        def load():
+            client = ai.OllamaAI()
+            client.base_url = url
+            models = client.list_models()
+            self.after(0, lambda: self._apply_ollama_models(models, silent))
+        threading.Thread(target=load, daemon=True).start()
+
+    def _apply_ollama_models(self, models, silent):
+        if not self.winfo_exists():
+            return
+        if not models:
+            self.ollama_hint.configure(text="Não encontrei modelos. O Ollama está rodando?", text_color=WARNING)
+            if not silent:
+                messagebox.showwarning("Ollama", "Não consegui listar modelos. O Ollama está rodando?")
+            return
+        self.ollama_model.configure(values=models)
+        if self.ollama_model.get() not in models:
+            self.ollama_model.set(models[0])
+        self.ollama_hint.configure(text=f"Instalados: {', '.join(models)}", text_color=TEXT3)
 
     def _save(self):
         db.set_setting("github_token", self.gh_token.get().strip())
         db.set_setting("ai_provider", self.provider.get())
         db.set_setting("gemini_key", self.gemini_key.get().strip())
-        db.set_setting("ollama_model", self.ollama_model.get().strip() or "phi3:mini")
+        db.set_setting("ollama_model", self.ollama_model.get().strip())
         db.set_setting("ollama_url", self.ollama_url.get().strip() or "http://localhost:11434")
         self.on_save()
         self.destroy()
@@ -367,7 +398,7 @@ class ImportReposDialog(ctk.CTkToplevel):
         self.title("Importar do GitHub")
         self.geometry("620x580")
         self.configure(fg_color=BG2)
-        self.after(100, self.grab_set)
+        self.after(100, lambda: safe_grab(self))
         self.on_import = on_import
         self.repos = []
         self.checkboxes = []
@@ -809,7 +840,7 @@ class AIPanel(ctk.CTkFrame):
         header.pack(fill="x", padx=24, pady=16)
         SectionLabel(header, "Assistente IA").pack(side="left")
         provider = db.get_setting("ai_provider", "gemini")
-        model = db.get_setting("ollama_model", "phi3:mini") if provider == "ollama" else "Gemini Flash"
+        model = (ai.get_ollama_model() or "nenhum modelo") if provider == "ollama" else "Gemini Flash"
         Tag(header, f"{provider} · {model}", ACCENT).pack(side="left", padx=8)
         DangerButton(header, text="Limpar", height=28, command=self._clear_chat).pack(side="right")
         quick = ctk.CTkFrame(self, fg_color="transparent")
@@ -866,23 +897,14 @@ class AIPanel(ctk.CTkFrame):
                         text_color=SUCCESS, height=28, font=FONT_SM,
                         command=add_tasks).pack(padx=14, pady=(0, 10), anchor="w")
 
-    def _attach_settings_button(self, bubble):
-        SecondaryButton(bubble, text="Abrir Configurações", hover_color=WARNING,
-                        text_color=WARNING, height=28, font=FONT_SM,
-                        command=lambda: SettingsDialog(self, on_save=lambda: None)
-                        ).pack(padx=14, pady=(0, 10), anchor="w")
-
     def _render_message(self, role, content):
         bubble = self._new_bubble(role)
         ctk.CTkLabel(bubble, text=content, font=FONT_BODY, text_color=TEXT,
                      wraplength=440, justify="left", anchor="w").pack(padx=14, pady=10, fill="x")
-        if role == "assistant":
-            if looks_like_auth_error(content):
-                self._attach_settings_button(bubble)
-            elif "- " in content:
-                tasks = ai.parse_ai_tasks(content)
-                if tasks:
-                    self._attach_task_button(bubble, tasks)
+        if role == "assistant" and "- " in content:
+            tasks = ai.parse_ai_tasks(content)
+            if tasks:
+                self._attach_task_button(bubble, tasks)
         return bubble
 
     def _scroll_bottom(self):
@@ -917,12 +939,9 @@ class AIPanel(ctk.CTkFrame):
                 self.after(0, self._scroll_bottom)
             self.after(0, lambda: resp_label.configure(text=full_response))
             db.add_chat_message(self.project["id"], "assistant", full_response)
-            if looks_like_auth_error(full_response):
-                self.after(0, lambda: self._attach_settings_button(ai_bubble))
-            else:
-                parsed = ai.parse_ai_tasks(full_response)
-                if parsed:
-                    self.after(0, lambda: self._attach_task_button(ai_bubble, parsed))
+            parsed = ai.parse_ai_tasks(full_response)
+            if parsed:
+                self.after(0, lambda: self._attach_task_button(ai_bubble, parsed))
             self.after(0, lambda: self.send_btn.configure(state="normal", text="Enviar →"))
             self.after(0, self._scroll_bottom)
         threading.Thread(target=stream, daemon=True).start()
@@ -988,7 +1007,7 @@ class App(ctk.CTk):
 
     def _update_ai_label(self):
         provider = db.get_setting("ai_provider", "gemini")
-        model = db.get_setting("ollama_model", "phi3:mini") if provider == "ollama" else "gemini-flash"
+        model = (ai.get_ollama_model() or "nenhum modelo") if provider == "ollama" else "gemini-flash"
         self.ai_label.configure(text=f"IA: {provider} · {model}")
 
     def _build_main(self):
