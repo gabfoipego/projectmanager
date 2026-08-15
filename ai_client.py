@@ -133,7 +133,20 @@ class OllamaAI:
                 timeout=60
             )
             if r.status_code != 200:
-                yield f"❌ Ollama erro {r.status_code}. O Ollama está rodando?"
+                try:
+                    detail = r.json().get("error", "")
+                except Exception:
+                    detail = r.text.strip()[:200]
+                if r.status_code == 404 and "not found" in detail.lower():
+                    available = self.list_models()
+                    if available:
+                        yield (f"❌ Modelo '{self.model}' não encontrado no Ollama. "
+                               f"Você tem instalado: {', '.join(available)}. "
+                               f"Troque em Configurações ou rode: `ollama pull {self.model}`")
+                    else:
+                        yield f"❌ Modelo '{self.model}' não encontrado no Ollama. Rode: `ollama pull {self.model}`"
+                else:
+                    yield f"❌ Ollama erro {r.status_code}: {detail or 'verifique se o Ollama está rodando.'}"
                 return
             for line in r.iter_lines():
                 if line:

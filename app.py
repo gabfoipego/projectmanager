@@ -324,12 +324,21 @@ class SettingsDialog(ctk.CTkToplevel):
         self.ollama_frame = ctk.CTkFrame(self, fg_color="transparent")
         self.ollama_frame.pack(fill="x", padx=24)
         ctk.CTkLabel(self.ollama_frame, text="Modelo Ollama", font=FONT_SM, text_color=TEXT2).pack(anchor="w", pady=(8, 0))
-        self.ollama_model = styled_entry(self.ollama_frame, placeholder_text="phi3:mini", font=FONT_MONO)
-        self.ollama_model.pack(fill="x", pady=(2, 0))
+        model_row = ctk.CTkFrame(self.ollama_frame, fg_color="transparent")
+        model_row.pack(fill="x", pady=(2, 0))
         saved_model = db.get_setting("ollama_model", "phi3:mini")
-        self.ollama_model.insert(0, saved_model)
-        ctk.CTkLabel(self.ollama_frame, text="Recomendados: phi3:mini, mistral, llama3.2:3b",
-                     font=FONT_SM, text_color=TEXT3).pack(anchor="w")
+        self.ollama_model = ctk.CTkComboBox(model_row, values=[saved_model], fg_color=BG3,
+                                             border_color=BORDER, button_color=CARD2,
+                                             button_hover_color=ACCENT, dropdown_fg_color=BG3,
+                                             dropdown_hover_color=CARD2, text_color=TEXT,
+                                             font=FONT_MONO, height=38)
+        self.ollama_model.set(saved_model)
+        self.ollama_model.pack(side="left", fill="x", expand=True)
+        SecondaryButton(model_row, text="↻", width=38, height=38, font=FONT_SM,
+                        command=lambda: self._refresh_ollama_models()).pack(side="left", padx=(6, 0))
+        self.ollama_hint = ctk.CTkLabel(self.ollama_frame, text="Buscando modelos instalados...",
+                                         font=FONT_SM, text_color=TEXT3)
+        self.ollama_hint.pack(anchor="w")
         ctk.CTkLabel(self.ollama_frame, text="Ollama URL", font=FONT_SM, text_color=TEXT2).pack(anchor="w", pady=(8, 0))
         self.ollama_url = styled_entry(self.ollama_frame, placeholder_text="http://localhost:11434", font=FONT_MONO)
         self.ollama_url.pack(fill="x", pady=(2, 0))
@@ -347,6 +356,31 @@ class SettingsDialog(ctk.CTkToplevel):
         else:
             self.gemini_frame.pack_forget()
             self.ollama_frame.pack(fill="x", padx=24)
+            self._refresh_ollama_models(silent=True)
+
+    def _refresh_ollama_models(self, silent=False):
+        url = self.ollama_url.get().strip() or "http://localhost:11434"
+        self.ollama_hint.configure(text="Buscando modelos instalados...", text_color=TEXT3)
+
+        def load():
+            client = ai.OllamaAI()
+            client.base_url = url
+            models = client.list_models()
+            self.after(0, lambda: self._apply_ollama_models(models, silent))
+        threading.Thread(target=load, daemon=True).start()
+
+    def _apply_ollama_models(self, models, silent):
+        if not self.winfo_exists():
+            return
+        if not models:
+            self.ollama_hint.configure(text="Não encontrei modelos. O Ollama está rodando?", text_color=WARNING)
+            if not silent:
+                messagebox.showwarning("Ollama", "Não consegui listar modelos. O Ollama está rodando?")
+            return
+        self.ollama_model.configure(values=models)
+        if self.ollama_model.get() not in models:
+            self.ollama_model.set(models[0])
+        self.ollama_hint.configure(text=f"Instalados: {', '.join(models)}", text_color=TEXT3)
 
     def _save(self):
         db.set_setting("github_token", self.gh_token.get().strip())
