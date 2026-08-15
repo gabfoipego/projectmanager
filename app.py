@@ -332,7 +332,7 @@ class AddTaskDialog(ctk.CTkToplevel):
         ctk.CTkLabel(self, text="Prioridade", font=FONT_SM, text_color=TEXT2).pack(padx=18, anchor="w")
         self.priority = ctk.CTkSegmentedButton(self, values=["low", "medium", "high"],
                                                 fg_color=BG3, selected_color=ACCENT,
-                                                text_color=TEXT, font=FONT_SM, height=26)
+                                                text_color=TEXT, font=FONT_SM, height=28)
         self.priority.set("medium")
         self.priority.pack(padx=18, pady=(2, 12), anchor="w")
         btn_frame = ctk.CTkFrame(self, fg_color="transparent")
@@ -413,7 +413,7 @@ class SettingsDialog(ctk.CTkToplevel):
         self.provider = ctk.CTkSegmentedButton(self, values=["gemini", "ollama"],
                                                 fg_color=BG3, selected_color=ACCENT,
                                                 text_color=TEXT, font=FONT_SM,
-                                                command=self._toggle_provider, height=26)
+                                                command=self._toggle_provider, height=28)
         self.provider.set(db.get_setting("ai_provider", "gemini"))
         self.provider.pack(padx=18, pady=(3, 6), anchor="w")
         self.gemini_frame = ctk.CTkFrame(self, fg_color="transparent")
@@ -685,9 +685,9 @@ class ProjectCard(ctk.CTkFrame):
         btn_row = ctk.CTkFrame(content, fg_color="transparent")
         btn_row.pack(fill="x", pady=(8, 0))
         SecondaryButton(btn_row, text="Abrir →", hover_color=ACCENT, text_color=TEXT,
-                        height=26, font=FONT_SM,
+                        height=28, font=FONT_SM,
                         command=lambda: on_click(project)).pack(side="left", fill="x", expand=True, padx=(0, 6))
-        DangerButton(btn_row, text="✕", width=26, height=26,
+        DangerButton(btn_row, text="✕", width=28, height=28,
                      command=lambda: on_delete(project)).pack(side="right")
 
         for w in (self, content, header, title_box):
@@ -771,7 +771,7 @@ class TasksPanel(ctk.CTkFrame):
         filter_btn = ctk.CTkSegmentedButton(toolbar, values=["all", "todo", "doing", "done"],
                                              variable=self.filter_var, fg_color=BG3,
                                              selected_color=ACCENT, text_color=TEXT,
-                                             font=FONT_SM, command=self._refresh, height=26)
+                                             font=FONT_SM, command=self._refresh, height=28)
         filter_btn.pack(side="left", padx=10)
         PrimaryButton(toolbar, text="+ Tarefa", font=FONT_SM, command=self._add_task).pack(side="right")
         total, done = db.get_task_stats(self.project["id"])
@@ -844,9 +844,9 @@ class TaskRow(ctk.CTkFrame):
         actions.pack(fill="x", pady=(6, 0))
         if task["status"] != "doing":
             SecondaryButton(actions, text="Em progresso", hover_color=ACCENT, text_color=TEXT2,
-                            height=24, font=FONT_SM,
+                            height=26, font=FONT_SM,
                             command=lambda: self._set_status("doing")).pack(side="left", padx=(0, 4))
-        DangerButton(actions, text="✕ Remover", height=24, command=self._delete).pack(side="left")
+        DangerButton(actions, text="✕ Remover", height=26, command=self._delete).pack(side="left")
         if task.get("description"):
             ctk.CTkLabel(content, text=task["description"], font=FONT_SM,
                          text_color=TEXT3, anchor="w").pack(anchor="w", pady=(4, 0))
@@ -918,9 +918,9 @@ class NotesPanel(ctk.CTkFrame):
                          text_color=TEXT3).pack(padx=10, anchor="w")
             row = ctk.CTkFrame(card, fg_color="transparent")
             row.pack(fill="x", padx=10, pady=(4, 8))
-            SecondaryButton(row, text="Ver", hover_color=ACCENT, height=24, font=FONT_SM,
+            SecondaryButton(row, text="Ver", hover_color=ACCENT, height=26, font=FONT_SM,
                             command=lambda n=note: self._view_note(n)).pack(side="left", padx=(0, 4))
-            DangerButton(row, text="✕", width=28, height=24,
+            DangerButton(row, text="✕", width=30, height=26,
                          command=lambda nid=note["id"]: self._delete_note(nid)).pack(side="left")
 
     def _view_note(self, note):
@@ -956,7 +956,7 @@ class AIPanel(ctk.CTkFrame):
         provider = db.get_setting("ai_provider", "gemini")
         model = (ai.get_ollama_model() or "nenhum modelo") if provider == "ollama" else "Gemini Flash"
         Tag(header, f"{provider} · {truncate(model, 24)}", ACCENT).pack(side="left", padx=8)
-        DangerButton(header, text="Limpar", height=24, command=self._clear_chat).pack(side="right")
+        DangerButton(header, text="Limpar", height=26, command=self._clear_chat).pack(side="right")
         quick = ctk.CTkFrame(self, fg_color="transparent")
         quick.pack(fill="x", padx=18, pady=(0, 8))
         prompts = [
@@ -967,7 +967,7 @@ class AIPanel(ctk.CTkFrame):
         ]
         for label, prompt in prompts:
             SecondaryButton(quick, text=label, hover_color=ACCENT, text_color=TEXT2,
-                            height=26, font=FONT_SM,
+                            height=28, font=FONT_SM,
                             command=lambda p=prompt: self._quick_send(p)).pack(side="left", padx=(0, 6))
         self.chat_scroll = ctk.CTkScrollableFrame(self, fg_color=BG2, corner_radius=8)
         self.chat_scroll.pack(fill="both", expand=True, padx=18, pady=(0, 6))
