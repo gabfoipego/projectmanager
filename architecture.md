@@ -26,6 +26,8 @@ projectmanager/
 ├── database.py     # Camada de dados — SQLite, CRUD
 ├── ai_client.py    # Clientes de IA — Gemini e Ollama com streaming
 ├── github_api.py   # Cliente GitHub REST API
+├── assets/
+│   └── icon.svg    # Marca do app (fonte vetorial; app.py reproduz o mesmo desenho via PIL)
 ├── requirements.txt
 └── .env.example
 ```
@@ -201,11 +203,13 @@ Camada de apresentação pura. Não contém lógica de negócio.
 | `NotesPanel`         | Editor split: lista à esquerda, editor à direita          |
 | `AIPanel`            | Chat com streaming, quick prompts e botão "Adicionar tarefas" |
 | `AddTaskDialog`      | Modal para criar tarefa                                   |
-| `SettingsDialog`     | Modal para tokens/API keys com toggle Gemini/Ollama       |
+| `SettingsDialog`     | Modal para tokens/API keys, toggle Gemini/Ollama e combobox de modelos Ollama instalados |
 | `ImportReposDialog`  | Modal com lista checkboxável de repos do GitHub           |
-| `HoverButton`        | CTkButton com hover color customizável                    |
+| `PrimaryButton` / `SecondaryButton` / `GhostButton` / `DangerButton` / `TabButton` | Sistema de botões com estilo e hover consistentes |
 | `CardFrame`          | CTkFrame com estilo de card padrão                        |
-| `Tag`                | Label de chip colorido (linguagem, prioridade, status)    |
+| `Tag`                | Chip colorido em pill (linguagem, prioridade, status)      |
+| `InitialsBadge`      | Badge circular com inicial (projeto, avatar do chat de IA)|
+| `generate_mark` / `image_to_photo` | Desenham a marca do app via PIL e convertem para `tkinter.PhotoImage` (ícone da janela e logo da sidebar, sem depender de `PIL.ImageTk`) |
 
 ---
 
