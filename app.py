@@ -1,6 +1,5 @@
 import customtkinter as ctk
 import tkinter as tk
-from tkinter import messagebox, simpledialog
 import threading
 import io
 from datetime import datetime
@@ -94,6 +93,17 @@ def humanize_dt(value):
     if days < 30:
         return f"há {days}d"
     return f"há {days // 30}m"
+
+
+def truncate(text, limit):
+    text = text or ""
+    return text if len(text) <= limit else text[:limit - 1].rstrip() + "…"
+
+
+def truncate_list(items, limit=4):
+    if len(items) <= limit:
+        return ", ".join(items)
+    return f"{', '.join(items[:limit])} +{len(items) - limit} mais"
 
 
 def safe_grab(widget):
@@ -246,6 +256,60 @@ class InitialsBadge(ctk.CTkLabel):
         super().__init__(master, text=text[:1].upper() if text else "?", **kwargs)
 
 
+class ConfirmDialog(ctk.CTkToplevel):
+    def __init__(self, parent, title, message, on_confirm, confirm_text="Remover", danger=True):
+        super().__init__(parent)
+        self.title(title)
+        self.geometry("400x180")
+        self.configure(fg_color=BG2)
+        self.resizable(False, False)
+        self.after(100, lambda: safe_grab(self))
+        accent = DANGER if danger else ACCENT
+        ctk.CTkFrame(self, fg_color=accent, height=3, corner_radius=0).pack(fill="x")
+        ctk.CTkLabel(self, text=title, font=FONT_H3, text_color=TEXT).pack(pady=(20, 6), padx=24, anchor="w")
+        ctk.CTkLabel(self, text=message, font=FONT_BODY, text_color=TEXT2,
+                     wraplength=340, justify="left", anchor="w").pack(padx=24, anchor="w")
+        btn_frame = ctk.CTkFrame(self, fg_color="transparent")
+        btn_frame.pack(fill="x", padx=24, pady=20, side="bottom")
+        SecondaryButton(btn_frame, text="Cancelar", command=self.destroy, width=100).pack(side="left")
+        confirm_cls = DangerButton if danger else PrimaryButton
+        confirm_cls(btn_frame, text=confirm_text, command=lambda: self._confirm(on_confirm),
+                    width=130).pack(side="right")
+        self.bind("<Escape>", lambda e: self.destroy())
+
+    def _confirm(self, on_confirm):
+        self.destroy()
+        on_confirm()
+
+
+def confirm(parent, title, message, on_confirm, confirm_text="Remover", danger=True):
+    ConfirmDialog(parent, title, message, on_confirm, confirm_text, danger)
+
+
+class Toast(ctk.CTkToplevel):
+    def __init__(self, root, message, kind="success"):
+        super().__init__(root)
+        self.overrideredirect(True)
+        self.attributes("-topmost", True)
+        color = {"success": SUCCESS, "warning": WARNING, "danger": DANGER}.get(kind, SUCCESS)
+        frame = ctk.CTkFrame(self, fg_color=CARD, corner_radius=10, border_width=1, border_color=color)
+        frame.pack()
+        ctk.CTkLabel(frame, text=message, font=FONT_SM, text_color=TEXT).pack(padx=16, pady=10)
+        self.update_idletasks()
+        x = root.winfo_rootx() + root.winfo_width() - self.winfo_width() - 24
+        y = root.winfo_rooty() + root.winfo_height() - self.winfo_height() - 24
+        self.geometry(f"+{x}+{y}")
+        self.after(2600, self._dismiss)
+
+    def _dismiss(self):
+        if self.winfo_exists():
+            self.destroy()
+
+
+def show_toast(widget, message, kind="success"):
+    Toast(widget.winfo_toplevel(), message, kind)
+
+
 class AddTaskDialog(ctk.CTkToplevel):
     def __init__(self, parent, on_save):
         super().__init__(parent)
@@ -259,8 +323,10 @@ class AddTaskDialog(ctk.CTkToplevel):
         ctk.CTkLabel(self, text="Nova Tarefa", font=FONT_H2, text_color=TEXT).pack(pady=(20, 4), padx=24, anchor="w")
         ctk.CTkLabel(self, text="Título", font=FONT_SM, text_color=TEXT2).pack(padx=24, anchor="w")
         self.title_entry = styled_entry(self, placeholder_text="Ex: Adicionar token de autenticação")
-        self.title_entry.pack(fill="x", padx=24, pady=(2, 10))
-        ctk.CTkLabel(self, text="Descrição (opcional)", font=FONT_SM, text_color=TEXT2).pack(padx=24, anchor="w")
+        self.title_entry.pack(fill="x", padx=24, pady=(2, 2))
+        self.error_label = ctk.CTkLabel(self, text="", font=FONT_XS, text_color=DANGER)
+        self.error_label.pack(padx=24, anchor="w")
+        ctk.CTkLabel(self, text="Descrição (opcional)", font=FONT_SM, text_color=TEXT2).pack(padx=24, anchor="w", pady=(8, 0))
         self.desc_entry = styled_textbox(self, height=80)
         self.desc_entry.pack(fill="x", padx=24, pady=(2, 10))
         ctk.CTkLabel(self, text="Prioridade", font=FONT_SM, text_color=TEXT2).pack(padx=24, anchor="w")
@@ -273,15 +339,53 @@ class AddTaskDialog(ctk.CTkToplevel):
         btn_frame.pack(fill="x", padx=24)
         SecondaryButton(btn_frame, text="Cancelar", command=self.destroy, width=100).pack(side="left")
         PrimaryButton(btn_frame, text="Adicionar", command=self._save, width=100).pack(side="right")
+        self.title_entry.bind("<Return>", lambda e: self._save())
+        self.bind("<Escape>", lambda e: self.destroy())
         self.title_entry.focus()
 
     def _save(self):
         title = self.title_entry.get().strip()
         if not title:
+            self.title_entry.configure(border_color=DANGER)
+            self.error_label.configure(text="Digite um título para a tarefa.")
             return
         desc = self.desc_entry.get("1.0", "end").strip()
         priority = self.priority.get()
         self.on_save(title, desc, priority)
+        self.destroy()
+
+
+class NewProjectDialog(ctk.CTkToplevel):
+    def __init__(self, parent, on_create):
+        super().__init__(parent)
+        self.title("Novo Projeto")
+        self.geometry("420x200")
+        self.configure(fg_color=BG2)
+        self.resizable(False, False)
+        self.after(100, lambda: safe_grab(self))
+        self.on_create = on_create
+        ctk.CTkFrame(self, fg_color=ACCENT, height=3, corner_radius=0).pack(fill="x")
+        ctk.CTkLabel(self, text="Novo Projeto", font=FONT_H2, text_color=TEXT).pack(pady=(20, 4), padx=24, anchor="w")
+        ctk.CTkLabel(self, text="Nome", font=FONT_SM, text_color=TEXT2).pack(padx=24, anchor="w")
+        self.name_entry = styled_entry(self, placeholder_text="Ex: meu-projeto-novo")
+        self.name_entry.pack(fill="x", padx=24, pady=(2, 2))
+        self.error_label = ctk.CTkLabel(self, text="", font=FONT_XS, text_color=DANGER)
+        self.error_label.pack(padx=24, anchor="w")
+        btn_frame = ctk.CTkFrame(self, fg_color="transparent")
+        btn_frame.pack(fill="x", padx=24, pady=(12, 20), side="bottom")
+        SecondaryButton(btn_frame, text="Cancelar", command=self.destroy, width=100).pack(side="left")
+        PrimaryButton(btn_frame, text="Criar", command=self._create, width=100).pack(side="right")
+        self.name_entry.bind("<Return>", lambda e: self._create())
+        self.bind("<Escape>", lambda e: self.destroy())
+        self.name_entry.focus()
+
+    def _create(self):
+        name = self.name_entry.get().strip()
+        if not name:
+            self.name_entry.configure(border_color=DANGER)
+            self.error_label.configure(text="Digite um nome para o projeto.")
+            return
+        self.on_create(name)
         self.destroy()
 
 
@@ -293,6 +397,7 @@ class SettingsDialog(ctk.CTkToplevel):
         self.configure(fg_color=BG2)
         self.resizable(False, False)
         self.after(100, lambda: safe_grab(self))
+        self.bind("<Escape>", lambda e: self.destroy())
         self.on_save = on_save
         ctk.CTkFrame(self, fg_color=ACCENT, height=3, corner_radius=0).pack(fill="x")
         ctk.CTkLabel(self, text="Configurações", font=FONT_H2, text_color=TEXT).pack(pady=(20, 4), padx=24, anchor="w")
@@ -337,8 +442,9 @@ class SettingsDialog(ctk.CTkToplevel):
         SecondaryButton(model_row, text="↻", width=38, height=38, font=FONT_SM,
                         command=lambda: self._refresh_ollama_models()).pack(side="left", padx=(6, 0))
         self.ollama_hint = ctk.CTkLabel(self.ollama_frame, text="Buscando modelos instalados...",
-                                         font=FONT_SM, text_color=TEXT3)
-        self.ollama_hint.pack(anchor="w")
+                                         font=FONT_SM, text_color=TEXT3, wraplength=460,
+                                         justify="left", anchor="w")
+        self.ollama_hint.pack(anchor="w", fill="x")
         ctk.CTkLabel(self.ollama_frame, text="Ollama URL", font=FONT_SM, text_color=TEXT2).pack(anchor="w", pady=(8, 0))
         self.ollama_url = styled_entry(self.ollama_frame, placeholder_text="http://localhost:11434", font=FONT_MONO)
         self.ollama_url.pack(fill="x", pady=(2, 0))
@@ -356,9 +462,9 @@ class SettingsDialog(ctk.CTkToplevel):
         else:
             self.gemini_frame.pack_forget()
             self.ollama_frame.pack(fill="x", padx=24)
-            self._refresh_ollama_models(silent=True)
+            self._refresh_ollama_models()
 
-    def _refresh_ollama_models(self, silent=False):
+    def _refresh_ollama_models(self):
         url = self.ollama_url.get().strip() or "http://localhost:11434"
         self.ollama_hint.configure(text="Buscando modelos instalados...", text_color=TEXT3)
 
@@ -366,21 +472,19 @@ class SettingsDialog(ctk.CTkToplevel):
             client = ai.OllamaAI()
             client.base_url = url
             models = client.list_models()
-            self.after(0, lambda: self._apply_ollama_models(models, silent))
+            self.after(0, lambda: self._apply_ollama_models(models))
         threading.Thread(target=load, daemon=True).start()
 
-    def _apply_ollama_models(self, models, silent):
+    def _apply_ollama_models(self, models):
         if not self.winfo_exists():
             return
         if not models:
             self.ollama_hint.configure(text="Não encontrei modelos. O Ollama está rodando?", text_color=WARNING)
-            if not silent:
-                messagebox.showwarning("Ollama", "Não consegui listar modelos. O Ollama está rodando?")
             return
         self.ollama_model.configure(values=models)
         if self.ollama_model.get() not in models:
             self.ollama_model.set(models[0])
-        self.ollama_hint.configure(text=f"Instalados: {', '.join(models)}", text_color=TEXT3)
+        self.ollama_hint.configure(text=f"Instalados: {truncate_list(models)}", text_color=TEXT3)
 
     def _save(self):
         db.set_setting("github_token", self.gh_token.get().strip())
@@ -399,6 +503,7 @@ class ImportReposDialog(ctk.CTkToplevel):
         self.geometry("620x580")
         self.configure(fg_color=BG2)
         self.after(100, lambda: safe_grab(self))
+        self.bind("<Escape>", lambda e: self.destroy())
         self.on_import = on_import
         self.repos = []
         self.checkboxes = []
@@ -485,7 +590,7 @@ class ImportReposDialog(ctk.CTkToplevel):
             info_frame = ctk.CTkFrame(row, fg_color="transparent")
             info_frame.pack(side="left", fill="x", expand=True, pady=6)
             ctk.CTkLabel(info_frame, text=repo["name"], font=FONT_H3, text_color=TEXT, anchor="w").pack(anchor="w")
-            desc = repo["description"][:60] + "..." if len(repo["description"]) > 60 else repo["description"]
+            desc = truncate(repo["description"], 60)
             if desc:
                 ctk.CTkLabel(info_frame, text=desc, font=FONT_SM, text_color=TEXT2, anchor="w").pack(anchor="w")
             tag_frame = ctk.CTkFrame(row, fg_color="transparent")
@@ -555,7 +660,7 @@ class ProjectCard(ctk.CTkFrame):
 
         desc = project.get("description", "")
         if desc:
-            short = desc[:70] + "..." if len(desc) > 70 else desc
+            short = truncate(desc, 70)
             ctk.CTkLabel(content, text=short, font=FONT_SM, text_color=TEXT2,
                          anchor="w", wraplength=220, justify="left").pack(anchor="w", pady=(10, 0))
 
@@ -613,17 +718,18 @@ class ProjectView(ctk.CTkFrame):
                     font=FONT_SM, command=self.on_back, width=100).pack(side="left")
         title_frame = ctk.CTkFrame(inner, fg_color="transparent")
         title_frame.pack(side="left", padx=16, fill="x", expand=True)
-        ctk.CTkLabel(title_frame, text=self.project["name"], font=FONT_H2,
-                     text_color=TEXT).pack(anchor="w")
+        ctk.CTkLabel(title_frame, text=truncate(self.project["name"], 60), font=FONT_H2,
+                     text_color=TEXT, anchor="w").pack(anchor="w", fill="x")
         meta_bits = []
         if self.project.get("github_url"):
-            meta_bits.append(self.project["github_url"])
+            meta_bits.append(truncate(self.project["github_url"], 60))
         updated = humanize_dt(self.project.get("updated_at"))
         if updated:
             meta_bits.append(f"atualizado {updated}")
         if meta_bits:
             ctk.CTkLabel(title_frame, text="   ·   ".join(meta_bits), font=FONT_SM,
-                         text_color=ACCENT if self.project.get("github_url") else TEXT3).pack(anchor="w")
+                         text_color=ACCENT if self.project.get("github_url") else TEXT3,
+                         wraplength=600, justify="left", anchor="w").pack(anchor="w", fill="x")
 
         tab_bar = ctk.CTkFrame(self, fg_color=BG2, corner_radius=0)
         tab_bar.pack(fill="x")
@@ -755,9 +861,12 @@ class TaskRow(ctk.CTkFrame):
         self.on_change()
 
     def _delete(self):
-        if messagebox.askyesno("Remover", f"Remover tarefa '{self.task['title']}'?"):
-            db.delete_task(self.task["id"])
-            self.on_change()
+        confirm(self, "Remover tarefa", f"Remover '{truncate(self.task['title'], 60)}'?",
+                self._do_delete)
+
+    def _do_delete(self):
+        db.delete_task(self.task["id"])
+        self.on_change()
 
 
 class NotesPanel(ctk.CTkFrame):
@@ -801,7 +910,7 @@ class NotesPanel(ctk.CTkFrame):
         for note in notes:
             card = CardFrame(self.note_scroll, fg_color=BG3)
             card.pack(fill="x", pady=3)
-            preview = note["content"][:80] + "..." if len(note["content"]) > 80 else note["content"]
+            preview = truncate(note["content"], 80)
             ctk.CTkLabel(card, text=preview, font=FONT_SM, text_color=TEXT,
                          wraplength=200, justify="left", anchor="w").pack(padx=10, pady=(8, 2), anchor="w")
             ctk.CTkLabel(card, text=note["created_at"][:16], font=FONT_XS,
@@ -825,6 +934,10 @@ class NotesPanel(ctk.CTkFrame):
             self._refresh_notes()
 
     def _delete_note(self, note_id):
+        confirm(self, "Remover nota", "Remover esta nota? Essa ação não pode ser desfeita.",
+                lambda: self._do_delete_note(note_id))
+
+    def _do_delete_note(self, note_id):
         db.delete_note(note_id)
         self._refresh_notes()
 
@@ -841,7 +954,7 @@ class AIPanel(ctk.CTkFrame):
         SectionLabel(header, "Assistente IA").pack(side="left")
         provider = db.get_setting("ai_provider", "gemini")
         model = (ai.get_ollama_model() or "nenhum modelo") if provider == "ollama" else "Gemini Flash"
-        Tag(header, f"{provider} · {model}", ACCENT).pack(side="left", padx=8)
+        Tag(header, f"{provider} · {truncate(model, 24)}", ACCENT).pack(side="left", padx=8)
         DangerButton(header, text="Limpar", height=28, command=self._clear_chat).pack(side="right")
         quick = ctk.CTkFrame(self, fg_color="transparent")
         quick.pack(fill="x", padx=24, pady=(0, 10))
@@ -892,7 +1005,7 @@ class AIPanel(ctk.CTkFrame):
         def add_tasks():
             for t in tasks:
                 db.add_task(self.project["id"], t["title"], priority=t["priority"])
-            messagebox.showinfo("Tarefas", f"{len(tasks)} tarefas adicionadas ao projeto!")
+            show_toast(bubble, f"{len(tasks)} tarefas adicionadas ao projeto!")
         SecondaryButton(bubble, text=f"+ Adicionar {len(tasks)} tarefas", hover_color=SUCCESS,
                         text_color=SUCCESS, height=28, font=FONT_SM,
                         command=add_tasks).pack(padx=14, pady=(0, 10), anchor="w")
@@ -952,10 +1065,13 @@ class AIPanel(ctk.CTkFrame):
         self._send()
 
     def _clear_chat(self):
-        if messagebox.askyesno("Limpar", "Limpar histórico de conversa?"):
-            db.clear_chat_history(self.project["id"])
-            for w in self.chat_scroll.winfo_children():
-                w.destroy()
+        confirm(self, "Limpar conversa", "Limpar todo o histórico de conversa deste projeto?",
+                self._do_clear_chat)
+
+    def _do_clear_chat(self):
+        db.clear_chat_history(self.project["id"])
+        for w in self.chat_scroll.winfo_children():
+            w.destroy()
 
 
 class App(ctk.CTk):
@@ -997,8 +1113,9 @@ class App(ctk.CTk):
         ctk.CTkFrame(self.sidebar, fg_color=BORDER, height=1).pack(fill="x", padx=16, pady=8)
         GhostButton(self.sidebar, text="⚙  Configurações", font=FONT_BODY, anchor="w", height=40,
                     command=self._open_settings).pack(fill="x", padx=8, pady=2, side="bottom")
-        self.ai_label = ctk.CTkLabel(self.sidebar, text="", font=FONT_SM, text_color=TEXT3)
-        self.ai_label.pack(side="bottom", pady=4)
+        self.ai_label = ctk.CTkLabel(self.sidebar, text="", font=FONT_SM, text_color=TEXT3,
+                                      wraplength=190, justify="center")
+        self.ai_label.pack(side="bottom", pady=4, padx=8)
         self._update_ai_label()
 
     def _set_active_nav(self, key):
@@ -1008,7 +1125,7 @@ class App(ctk.CTk):
     def _update_ai_label(self):
         provider = db.get_setting("ai_provider", "gemini")
         model = (ai.get_ollama_model() or "nenhum modelo") if provider == "ollama" else "gemini-flash"
-        self.ai_label.configure(text=f"IA: {provider} · {model}")
+        self.ai_label.configure(text=f"IA: {provider} · {truncate(model, 24)}")
 
     def _build_main(self):
         self.main = ctk.CTkFrame(self, fg_color=BG, corner_radius=0)
@@ -1079,15 +1196,19 @@ class App(ctk.CTk):
         ProjectView(self.main, project, on_back=self._show_projects).pack(fill="both", expand=True)
 
     def _delete_project(self, project):
-        if messagebox.askyesno("Remover", f"Remover projeto '{project['name']}'? Isso apagará todas as tarefas e notas."):
-            db.delete_project(project["id"])
-            self._show_projects()
+        confirm(self, "Remover projeto",
+                f"Remover '{truncate(project['name'], 60)}'? Isso apaga todas as tarefas e notas do projeto.",
+                lambda: self._do_delete_project(project))
+
+    def _do_delete_project(self, project):
+        db.delete_project(project["id"])
+        self._show_projects()
 
     def _new_project(self):
-        name = simpledialog.askstring("Novo Projeto", "Nome do projeto:", parent=self)
-        if name and name.strip():
-            db.add_project(name.strip())
+        def create(name):
+            db.add_project(name)
             self._show_projects()
+        NewProjectDialog(self, create)
 
     def _import_github(self):
         ImportReposDialog(self, on_import=self._show_projects)
