@@ -96,17 +96,6 @@ def humanize_dt(value):
     return f"há {days // 30}m"
 
 
-AUTH_ERROR_HINTS = (
-    "bad credentials", "unauthorized", "unauthenticated", "401",
-    "invalid api key", "api key not valid", "não configurada",
-)
-
-
-def looks_like_auth_error(text):
-    low = text.lower()
-    return any(hint in low for hint in AUTH_ERROR_HINTS)
-
-
 def safe_grab(widget):
     if widget.winfo_exists():
         try:
@@ -874,23 +863,14 @@ class AIPanel(ctk.CTkFrame):
                         text_color=SUCCESS, height=28, font=FONT_SM,
                         command=add_tasks).pack(padx=14, pady=(0, 10), anchor="w")
 
-    def _attach_settings_button(self, bubble):
-        SecondaryButton(bubble, text="Abrir Configurações", hover_color=WARNING,
-                        text_color=WARNING, height=28, font=FONT_SM,
-                        command=lambda: SettingsDialog(self, on_save=lambda: None)
-                        ).pack(padx=14, pady=(0, 10), anchor="w")
-
     def _render_message(self, role, content):
         bubble = self._new_bubble(role)
         ctk.CTkLabel(bubble, text=content, font=FONT_BODY, text_color=TEXT,
                      wraplength=440, justify="left", anchor="w").pack(padx=14, pady=10, fill="x")
-        if role == "assistant":
-            if looks_like_auth_error(content):
-                self._attach_settings_button(bubble)
-            elif "- " in content:
-                tasks = ai.parse_ai_tasks(content)
-                if tasks:
-                    self._attach_task_button(bubble, tasks)
+        if role == "assistant" and "- " in content:
+            tasks = ai.parse_ai_tasks(content)
+            if tasks:
+                self._attach_task_button(bubble, tasks)
         return bubble
 
     def _scroll_bottom(self):
@@ -925,12 +905,9 @@ class AIPanel(ctk.CTkFrame):
                 self.after(0, self._scroll_bottom)
             self.after(0, lambda: resp_label.configure(text=full_response))
             db.add_chat_message(self.project["id"], "assistant", full_response)
-            if looks_like_auth_error(full_response):
-                self.after(0, lambda: self._attach_settings_button(ai_bubble))
-            else:
-                parsed = ai.parse_ai_tasks(full_response)
-                if parsed:
-                    self.after(0, lambda: self._attach_task_button(ai_bubble, parsed))
+            parsed = ai.parse_ai_tasks(full_response)
+            if parsed:
+                self.after(0, lambda: self._attach_task_button(ai_bubble, parsed))
             self.after(0, lambda: self.send_btn.configure(state="normal", text="Enviar →"))
             self.after(0, self._scroll_bottom)
         threading.Thread(target=stream, daemon=True).start()
