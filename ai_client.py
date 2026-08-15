@@ -11,7 +11,7 @@ def get_ai_provider():
 
 
 def get_ollama_model():
-    return db.get_setting("ollama_model", "phi3:mini")
+    return db.get_setting("ollama_model", "")
 
 
 def get_gemini_key():
@@ -124,6 +124,10 @@ class OllamaAI:
         self.base_url = db.get_setting("ollama_url", "http://localhost:11434")
 
     def stream_chat(self, messages: list, system: str) -> Generator[str, None, None]:
+        if not self.model:
+            yield "❌ Nenhum modelo Ollama selecionado. Vá em Configurações e escolha um modelo instalado."
+            return
+
         try:
             msgs = [{"role": "system", "content": system}] + trim_history(messages)
             r = requests.post(

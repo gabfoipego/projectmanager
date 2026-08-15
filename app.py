@@ -326,8 +326,8 @@ class SettingsDialog(ctk.CTkToplevel):
         ctk.CTkLabel(self.ollama_frame, text="Modelo Ollama", font=FONT_SM, text_color=TEXT2).pack(anchor="w", pady=(8, 0))
         model_row = ctk.CTkFrame(self.ollama_frame, fg_color="transparent")
         model_row.pack(fill="x", pady=(2, 0))
-        saved_model = db.get_setting("ollama_model", "phi3:mini")
-        self.ollama_model = ctk.CTkComboBox(model_row, values=[saved_model], fg_color=BG3,
+        saved_model = ai.get_ollama_model()
+        self.ollama_model = ctk.CTkComboBox(model_row, values=[saved_model] if saved_model else [], fg_color=BG3,
                                              border_color=BORDER, button_color=CARD2,
                                              button_hover_color=ACCENT, dropdown_fg_color=BG3,
                                              dropdown_hover_color=CARD2, text_color=TEXT,
@@ -386,7 +386,7 @@ class SettingsDialog(ctk.CTkToplevel):
         db.set_setting("github_token", self.gh_token.get().strip())
         db.set_setting("ai_provider", self.provider.get())
         db.set_setting("gemini_key", self.gemini_key.get().strip())
-        db.set_setting("ollama_model", self.ollama_model.get().strip() or "phi3:mini")
+        db.set_setting("ollama_model", self.ollama_model.get().strip())
         db.set_setting("ollama_url", self.ollama_url.get().strip() or "http://localhost:11434")
         self.on_save()
         self.destroy()
@@ -840,7 +840,7 @@ class AIPanel(ctk.CTkFrame):
         header.pack(fill="x", padx=24, pady=16)
         SectionLabel(header, "Assistente IA").pack(side="left")
         provider = db.get_setting("ai_provider", "gemini")
-        model = db.get_setting("ollama_model", "phi3:mini") if provider == "ollama" else "Gemini Flash"
+        model = (ai.get_ollama_model() or "nenhum modelo") if provider == "ollama" else "Gemini Flash"
         Tag(header, f"{provider} · {model}", ACCENT).pack(side="left", padx=8)
         DangerButton(header, text="Limpar", height=28, command=self._clear_chat).pack(side="right")
         quick = ctk.CTkFrame(self, fg_color="transparent")
@@ -1007,7 +1007,7 @@ class App(ctk.CTk):
 
     def _update_ai_label(self):
         provider = db.get_setting("ai_provider", "gemini")
-        model = db.get_setting("ollama_model", "phi3:mini") if provider == "ollama" else "gemini-flash"
+        model = (ai.get_ollama_model() or "nenhum modelo") if provider == "ollama" else "gemini-flash"
         self.ai_label.configure(text=f"IA: {provider} · {model}")
 
     def _build_main(self):
