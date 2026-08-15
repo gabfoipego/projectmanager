@@ -107,6 +107,14 @@ def looks_like_auth_error(text):
     return any(hint in low for hint in AUTH_ERROR_HINTS)
 
 
+def safe_grab(widget):
+    if widget.winfo_exists():
+        try:
+            widget.grab_set()
+        except tk.TclError:
+            pass
+
+
 def styled_entry(master, **kwargs):
     kwargs.setdefault("fg_color", BG3)
     kwargs.setdefault("border_color", BORDER)
@@ -256,7 +264,7 @@ class AddTaskDialog(ctk.CTkToplevel):
         self.geometry("480x400")
         self.configure(fg_color=BG2)
         self.resizable(False, False)
-        self.after(100, self.grab_set)
+        self.after(100, lambda: safe_grab(self))
         self.on_save = on_save
         ctk.CTkFrame(self, fg_color=ACCENT, height=3, corner_radius=0).pack(fill="x")
         ctk.CTkLabel(self, text="Nova Tarefa", font=FONT_H2, text_color=TEXT).pack(pady=(20, 4), padx=24, anchor="w")
@@ -295,7 +303,7 @@ class SettingsDialog(ctk.CTkToplevel):
         self.geometry("520x560")
         self.configure(fg_color=BG2)
         self.resizable(False, False)
-        self.after(100, self.grab_set)
+        self.after(100, lambda: safe_grab(self))
         self.on_save = on_save
         ctk.CTkFrame(self, fg_color=ACCENT, height=3, corner_radius=0).pack(fill="x")
         ctk.CTkLabel(self, text="Configurações", font=FONT_H2, text_color=TEXT).pack(pady=(20, 4), padx=24, anchor="w")
@@ -367,7 +375,7 @@ class ImportReposDialog(ctk.CTkToplevel):
         self.title("Importar do GitHub")
         self.geometry("620x580")
         self.configure(fg_color=BG2)
-        self.after(100, self.grab_set)
+        self.after(100, lambda: safe_grab(self))
         self.on_import = on_import
         self.repos = []
         self.checkboxes = []
