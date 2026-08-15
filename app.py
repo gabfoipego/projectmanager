@@ -33,13 +33,13 @@ TEXT3 = "#6c6884"
 PRIORITY_COLORS = {"high": DANGER, "medium": WARNING, "low": SUCCESS}
 STATUS_COLORS   = {"todo": TEXT3, "doing": ACCENT, "done": SUCCESS}
 
-FONT_H1   = ("Inter", 26, "bold")
-FONT_H2   = ("Inter", 17, "bold")
-FONT_H3   = ("Inter", 13, "bold")
-FONT_BODY = ("Inter", 12)
-FONT_SM   = ("Inter", 11)
-FONT_XS   = ("Inter", 10)
-FONT_MONO = ("JetBrains Mono", 11)
+FONT_H1   = ("Inter", 20, "bold")
+FONT_H2   = ("Inter", 15, "bold")
+FONT_H3   = ("Inter", 12, "bold")
+FONT_BODY = ("Inter", 11)
+FONT_SM   = ("Inter", 10)
+FONT_XS   = ("Inter", 9)
+FONT_MONO = ("JetBrains Mono", 10)
 
 
 def generate_mark(size=256):
@@ -119,8 +119,8 @@ def styled_entry(master, **kwargs):
     kwargs.setdefault("border_color", BORDER)
     kwargs.setdefault("text_color", TEXT)
     kwargs.setdefault("font", FONT_BODY)
-    kwargs.setdefault("height", 38)
-    kwargs.setdefault("corner_radius", 8)
+    kwargs.setdefault("height", 32)
+    kwargs.setdefault("corner_radius", 7)
     kwargs.setdefault("border_width", 1)
     return ctk.CTkEntry(master, **kwargs)
 
@@ -131,7 +131,7 @@ def styled_textbox(master, **kwargs):
     kwargs.setdefault("text_color", TEXT)
     kwargs.setdefault("font", FONT_BODY)
     kwargs.setdefault("border_width", 1)
-    kwargs.setdefault("corner_radius", 8)
+    kwargs.setdefault("corner_radius", 7)
     return ctk.CTkTextbox(master, **kwargs)
 
 
@@ -140,7 +140,7 @@ class PrimaryButton(ctk.CTkButton):
         kwargs.setdefault("fg_color", ACCENT)
         kwargs.setdefault("hover_color", ACCENT_HOVER)
         kwargs.setdefault("text_color", "#ffffff")
-        kwargs.setdefault("corner_radius", 10)
+        kwargs.setdefault("corner_radius", 8)
         kwargs.setdefault("border_width", 0)
         kwargs.setdefault("font", FONT_BODY)
         super().__init__(master, **kwargs)
@@ -151,7 +151,7 @@ class SecondaryButton(ctk.CTkButton):
         kwargs.setdefault("fg_color", CARD2)
         kwargs.setdefault("hover_color", BORDER_LIGHT)
         kwargs.setdefault("text_color", TEXT2)
-        kwargs.setdefault("corner_radius", 10)
+        kwargs.setdefault("corner_radius", 8)
         kwargs.setdefault("border_width", 0)
         kwargs.setdefault("font", FONT_BODY)
         super().__init__(master, **kwargs)
@@ -161,7 +161,7 @@ class GhostButton(ctk.CTkButton):
     def __init__(self, master, hover_color=CARD, active_color=CARD, **kwargs):
         kwargs.setdefault("fg_color", "transparent")
         kwargs.setdefault("text_color", TEXT2)
-        kwargs.setdefault("corner_radius", 8)
+        kwargs.setdefault("corner_radius", 6)
         kwargs.setdefault("border_width", 0)
         kwargs.setdefault("font", FONT_BODY)
         super().__init__(master, **kwargs)
@@ -183,7 +183,7 @@ class DangerButton(ctk.CTkButton):
     def __init__(self, master, **kwargs):
         kwargs.setdefault("fg_color", CARD2)
         kwargs.setdefault("text_color", DANGER)
-        kwargs.setdefault("corner_radius", 8)
+        kwargs.setdefault("corner_radius", 6)
         kwargs.setdefault("border_width", 0)
         kwargs.setdefault("font", FONT_SM)
         kwargs.setdefault("hover_color", DANGER)
@@ -196,11 +196,11 @@ class TabButton(ctk.CTkButton):
     def __init__(self, master, **kwargs):
         kwargs.setdefault("fg_color", "transparent")
         kwargs.setdefault("text_color", TEXT2)
-        kwargs.setdefault("corner_radius", 8)
+        kwargs.setdefault("corner_radius", 6)
         kwargs.setdefault("border_width", 0)
         kwargs.setdefault("font", FONT_SM)
-        kwargs.setdefault("height", 38)
-        kwargs.setdefault("width", 100)
+        kwargs.setdefault("height", 32)
+        kwargs.setdefault("width", 84)
         super().__init__(master, **kwargs)
         self._active = False
         self.bind("<Enter>", self._on_enter)
@@ -223,7 +223,7 @@ class TabButton(ctk.CTkButton):
 class CardFrame(ctk.CTkFrame):
     def __init__(self, master, **kwargs):
         kwargs.setdefault("fg_color", CARD)
-        kwargs.setdefault("corner_radius", 14)
+        kwargs.setdefault("corner_radius", 10)
         kwargs.setdefault("border_width", 1)
         kwargs.setdefault("border_color", BORDER)
         super().__init__(master, **kwargs)
@@ -246,7 +246,7 @@ class Tag(ctk.CTkFrame):
 
 
 class InitialsBadge(ctk.CTkLabel):
-    def __init__(self, master, text, color=ACCENT, size=32, **kwargs):
+    def __init__(self, master, text, color=ACCENT, size=26, **kwargs):
         kwargs.setdefault("font", ("Inter", int(size * 0.42), "bold"))
         kwargs.setdefault("text_color", "#ffffff")
         kwargs.setdefault("fg_color", color)
@@ -260,21 +260,21 @@ class ConfirmDialog(ctk.CTkToplevel):
     def __init__(self, parent, title, message, on_confirm, confirm_text="Remover", danger=True):
         super().__init__(parent)
         self.title(title)
-        self.geometry("400x180")
+        self.geometry("360x160")
         self.configure(fg_color=BG2)
         self.resizable(False, False)
         self.after(100, lambda: safe_grab(self))
         accent = DANGER if danger else ACCENT
         ctk.CTkFrame(self, fg_color=accent, height=3, corner_radius=0).pack(fill="x")
-        ctk.CTkLabel(self, text=title, font=FONT_H3, text_color=TEXT).pack(pady=(20, 6), padx=24, anchor="w")
+        ctk.CTkLabel(self, text=title, font=FONT_H3, text_color=TEXT).pack(pady=(16, 5), padx=18, anchor="w")
         ctk.CTkLabel(self, text=message, font=FONT_BODY, text_color=TEXT2,
-                     wraplength=340, justify="left", anchor="w").pack(padx=24, anchor="w")
+                     wraplength=310, justify="left", anchor="w").pack(padx=18, anchor="w")
         btn_frame = ctk.CTkFrame(self, fg_color="transparent")
-        btn_frame.pack(fill="x", padx=24, pady=20, side="bottom")
-        SecondaryButton(btn_frame, text="Cancelar", command=self.destroy, width=100).pack(side="left")
+        btn_frame.pack(fill="x", padx=18, pady=16, side="bottom")
+        SecondaryButton(btn_frame, text="Cancelar", command=self.destroy, width=84).pack(side="left")
         confirm_cls = DangerButton if danger else PrimaryButton
         confirm_cls(btn_frame, text=confirm_text, command=lambda: self._confirm(on_confirm),
-                    width=130).pack(side="right")
+                    width=110).pack(side="right")
         self.bind("<Escape>", lambda e: self.destroy())
 
     def _confirm(self, on_confirm):
@@ -294,10 +294,10 @@ class Toast(ctk.CTkToplevel):
         color = {"success": SUCCESS, "warning": WARNING, "danger": DANGER}.get(kind, SUCCESS)
         frame = ctk.CTkFrame(self, fg_color=CARD, corner_radius=10, border_width=1, border_color=color)
         frame.pack()
-        ctk.CTkLabel(frame, text=message, font=FONT_SM, text_color=TEXT).pack(padx=16, pady=10)
+        ctk.CTkLabel(frame, text=message, font=FONT_SM, text_color=TEXT).pack(padx=14, pady=8)
         self.update_idletasks()
-        x = root.winfo_rootx() + root.winfo_width() - self.winfo_width() - 24
-        y = root.winfo_rooty() + root.winfo_height() - self.winfo_height() - 24
+        x = root.winfo_rootx() + root.winfo_width() - self.winfo_width() - 20
+        y = root.winfo_rooty() + root.winfo_height() - self.winfo_height() - 20
         self.geometry(f"+{x}+{y}")
         self.after(2600, self._dismiss)
 
@@ -314,30 +314,30 @@ class AddTaskDialog(ctk.CTkToplevel):
     def __init__(self, parent, on_save):
         super().__init__(parent)
         self.title("Nova Tarefa")
-        self.geometry("480x400")
+        self.geometry("420x350")
         self.configure(fg_color=BG2)
         self.resizable(False, False)
         self.after(100, lambda: safe_grab(self))
         self.on_save = on_save
         ctk.CTkFrame(self, fg_color=ACCENT, height=3, corner_radius=0).pack(fill="x")
-        ctk.CTkLabel(self, text="Nova Tarefa", font=FONT_H2, text_color=TEXT).pack(pady=(20, 4), padx=24, anchor="w")
-        ctk.CTkLabel(self, text="Título", font=FONT_SM, text_color=TEXT2).pack(padx=24, anchor="w")
+        ctk.CTkLabel(self, text="Nova Tarefa", font=FONT_H2, text_color=TEXT).pack(pady=(16, 4), padx=18, anchor="w")
+        ctk.CTkLabel(self, text="Título", font=FONT_SM, text_color=TEXT2).pack(padx=18, anchor="w")
         self.title_entry = styled_entry(self, placeholder_text="Ex: Adicionar token de autenticação")
-        self.title_entry.pack(fill="x", padx=24, pady=(2, 2))
+        self.title_entry.pack(fill="x", padx=18, pady=(2, 2))
         self.error_label = ctk.CTkLabel(self, text="", font=FONT_XS, text_color=DANGER)
-        self.error_label.pack(padx=24, anchor="w")
-        ctk.CTkLabel(self, text="Descrição (opcional)", font=FONT_SM, text_color=TEXT2).pack(padx=24, anchor="w", pady=(8, 0))
-        self.desc_entry = styled_textbox(self, height=80)
-        self.desc_entry.pack(fill="x", padx=24, pady=(2, 10))
-        ctk.CTkLabel(self, text="Prioridade", font=FONT_SM, text_color=TEXT2).pack(padx=24, anchor="w")
+        self.error_label.pack(padx=18, anchor="w")
+        ctk.CTkLabel(self, text="Descrição (opcional)", font=FONT_SM, text_color=TEXT2).pack(padx=18, anchor="w", pady=(6, 0))
+        self.desc_entry = styled_textbox(self, height=68)
+        self.desc_entry.pack(fill="x", padx=18, pady=(2, 8))
+        ctk.CTkLabel(self, text="Prioridade", font=FONT_SM, text_color=TEXT2).pack(padx=18, anchor="w")
         self.priority = ctk.CTkSegmentedButton(self, values=["low", "medium", "high"],
                                                 fg_color=BG3, selected_color=ACCENT,
-                                                text_color=TEXT, font=FONT_SM)
+                                                text_color=TEXT, font=FONT_SM, height=26)
         self.priority.set("medium")
-        self.priority.pack(padx=24, pady=(2, 16), anchor="w")
+        self.priority.pack(padx=18, pady=(2, 12), anchor="w")
         btn_frame = ctk.CTkFrame(self, fg_color="transparent")
-        btn_frame.pack(fill="x", padx=24)
-        SecondaryButton(btn_frame, text="Cancelar", command=self.destroy, width=100).pack(side="left")
+        btn_frame.pack(fill="x", padx=18)
+        SecondaryButton(btn_frame, text="Cancelar", command=self.destroy, width=84).pack(side="left")
         PrimaryButton(btn_frame, text="Adicionar", command=self._save, width=100).pack(side="right")
         self.title_entry.bind("<Return>", lambda e: self._save())
         self.bind("<Escape>", lambda e: self.destroy())
@@ -359,21 +359,21 @@ class NewProjectDialog(ctk.CTkToplevel):
     def __init__(self, parent, on_create):
         super().__init__(parent)
         self.title("Novo Projeto")
-        self.geometry("420x200")
+        self.geometry("380x175")
         self.configure(fg_color=BG2)
         self.resizable(False, False)
         self.after(100, lambda: safe_grab(self))
         self.on_create = on_create
         ctk.CTkFrame(self, fg_color=ACCENT, height=3, corner_radius=0).pack(fill="x")
-        ctk.CTkLabel(self, text="Novo Projeto", font=FONT_H2, text_color=TEXT).pack(pady=(20, 4), padx=24, anchor="w")
-        ctk.CTkLabel(self, text="Nome", font=FONT_SM, text_color=TEXT2).pack(padx=24, anchor="w")
+        ctk.CTkLabel(self, text="Novo Projeto", font=FONT_H2, text_color=TEXT).pack(pady=(16, 4), padx=18, anchor="w")
+        ctk.CTkLabel(self, text="Nome", font=FONT_SM, text_color=TEXT2).pack(padx=18, anchor="w")
         self.name_entry = styled_entry(self, placeholder_text="Ex: meu-projeto-novo")
-        self.name_entry.pack(fill="x", padx=24, pady=(2, 2))
+        self.name_entry.pack(fill="x", padx=18, pady=(2, 2))
         self.error_label = ctk.CTkLabel(self, text="", font=FONT_XS, text_color=DANGER)
-        self.error_label.pack(padx=24, anchor="w")
+        self.error_label.pack(padx=18, anchor="w")
         btn_frame = ctk.CTkFrame(self, fg_color="transparent")
-        btn_frame.pack(fill="x", padx=24, pady=(12, 20), side="bottom")
-        SecondaryButton(btn_frame, text="Cancelar", command=self.destroy, width=100).pack(side="left")
+        btn_frame.pack(fill="x", padx=18, pady=(10, 16), side="bottom")
+        SecondaryButton(btn_frame, text="Cancelar", command=self.destroy, width=84).pack(side="left")
         PrimaryButton(btn_frame, text="Criar", command=self._create, width=100).pack(side="right")
         self.name_entry.bind("<Return>", lambda e: self._create())
         self.bind("<Escape>", lambda e: self.destroy())
@@ -393,31 +393,31 @@ class SettingsDialog(ctk.CTkToplevel):
     def __init__(self, parent, on_save):
         super().__init__(parent)
         self.title("Configurações")
-        self.geometry("520x560")
+        self.geometry("460x500")
         self.configure(fg_color=BG2)
         self.resizable(False, False)
         self.after(100, lambda: safe_grab(self))
         self.bind("<Escape>", lambda e: self.destroy())
         self.on_save = on_save
         ctk.CTkFrame(self, fg_color=ACCENT, height=3, corner_radius=0).pack(fill="x")
-        ctk.CTkLabel(self, text="Configurações", font=FONT_H2, text_color=TEXT).pack(pady=(20, 4), padx=24, anchor="w")
-        ctk.CTkLabel(self, text="GitHub Token", font=FONT_H3, text_color=TEXT2).pack(padx=24, anchor="w", pady=(12, 0))
+        ctk.CTkLabel(self, text="Configurações", font=FONT_H2, text_color=TEXT).pack(pady=(16, 4), padx=18, anchor="w")
+        ctk.CTkLabel(self, text="GitHub Token", font=FONT_H3, text_color=TEXT2).pack(padx=18, anchor="w", pady=(10, 0))
         self.gh_token = styled_entry(self, placeholder_text="ghp_...", show="*", font=FONT_MONO)
-        self.gh_token.pack(fill="x", padx=24, pady=(4, 4))
+        self.gh_token.pack(fill="x", padx=18, pady=(3, 3))
         saved_token = db.get_setting("github_token", "")
         if saved_token:
             self.gh_token.insert(0, saved_token)
         ctk.CTkLabel(self, text="github.com/settings/tokens → New token → repo scope",
-                     font=FONT_SM, text_color=TEXT3).pack(padx=24, anchor="w")
-        ctk.CTkLabel(self, text="Provedor de IA", font=FONT_H3, text_color=TEXT2).pack(padx=24, anchor="w", pady=(16, 0))
+                     font=FONT_SM, text_color=TEXT3).pack(padx=18, anchor="w")
+        ctk.CTkLabel(self, text="Provedor de IA", font=FONT_H3, text_color=TEXT2).pack(padx=18, anchor="w", pady=(12, 0))
         self.provider = ctk.CTkSegmentedButton(self, values=["gemini", "ollama"],
                                                 fg_color=BG3, selected_color=ACCENT,
                                                 text_color=TEXT, font=FONT_SM,
-                                                command=self._toggle_provider)
+                                                command=self._toggle_provider, height=26)
         self.provider.set(db.get_setting("ai_provider", "gemini"))
-        self.provider.pack(padx=24, pady=(4, 8), anchor="w")
+        self.provider.pack(padx=18, pady=(3, 6), anchor="w")
         self.gemini_frame = ctk.CTkFrame(self, fg_color="transparent")
-        self.gemini_frame.pack(fill="x", padx=24)
+        self.gemini_frame.pack(fill="x", padx=18)
         ctk.CTkLabel(self.gemini_frame, text="Gemini API Key", font=FONT_SM, text_color=TEXT2).pack(anchor="w")
         self.gemini_key = styled_entry(self.gemini_frame, placeholder_text="AIza...", show="*", font=FONT_MONO)
         self.gemini_key.pack(fill="x", pady=(2, 0))
@@ -427,8 +427,8 @@ class SettingsDialog(ctk.CTkToplevel):
         ctk.CTkLabel(self.gemini_frame, text="aistudio.google.com → Get API Key (grátis)",
                      font=FONT_SM, text_color=TEXT3).pack(anchor="w")
         self.ollama_frame = ctk.CTkFrame(self, fg_color="transparent")
-        self.ollama_frame.pack(fill="x", padx=24)
-        ctk.CTkLabel(self.ollama_frame, text="Modelo Ollama", font=FONT_SM, text_color=TEXT2).pack(anchor="w", pady=(8, 0))
+        self.ollama_frame.pack(fill="x", padx=18)
+        ctk.CTkLabel(self.ollama_frame, text="Modelo Ollama", font=FONT_SM, text_color=TEXT2).pack(anchor="w", pady=(6, 0))
         model_row = ctk.CTkFrame(self.ollama_frame, fg_color="transparent")
         model_row.pack(fill="x", pady=(2, 0))
         saved_model = ai.get_ollama_model()
@@ -436,32 +436,32 @@ class SettingsDialog(ctk.CTkToplevel):
                                              border_color=BORDER, button_color=CARD2,
                                              button_hover_color=ACCENT, dropdown_fg_color=BG3,
                                              dropdown_hover_color=CARD2, text_color=TEXT,
-                                             font=FONT_MONO, height=38)
+                                             font=FONT_MONO, height=32)
         self.ollama_model.set(saved_model)
         self.ollama_model.pack(side="left", fill="x", expand=True)
-        SecondaryButton(model_row, text="↻", width=38, height=38, font=FONT_SM,
+        SecondaryButton(model_row, text="↻", width=32, height=32, font=FONT_SM,
                         command=lambda: self._refresh_ollama_models()).pack(side="left", padx=(6, 0))
         self.ollama_hint = ctk.CTkLabel(self.ollama_frame, text="Buscando modelos instalados...",
-                                         font=FONT_SM, text_color=TEXT3, wraplength=460,
+                                         font=FONT_SM, text_color=TEXT3, wraplength=400,
                                          justify="left", anchor="w")
         self.ollama_hint.pack(anchor="w", fill="x")
-        ctk.CTkLabel(self.ollama_frame, text="Ollama URL", font=FONT_SM, text_color=TEXT2).pack(anchor="w", pady=(8, 0))
+        ctk.CTkLabel(self.ollama_frame, text="Ollama URL", font=FONT_SM, text_color=TEXT2).pack(anchor="w", pady=(6, 0))
         self.ollama_url = styled_entry(self.ollama_frame, placeholder_text="http://localhost:11434", font=FONT_MONO)
         self.ollama_url.pack(fill="x", pady=(2, 0))
         self.ollama_url.insert(0, db.get_setting("ollama_url", "http://localhost:11434"))
         self._toggle_provider(self.provider.get())
         btn_frame = ctk.CTkFrame(self, fg_color="transparent")
-        btn_frame.pack(fill="x", padx=24, pady=20, side="bottom")
-        SecondaryButton(btn_frame, text="Cancelar", command=self.destroy, width=100).pack(side="left")
+        btn_frame.pack(fill="x", padx=18, pady=16, side="bottom")
+        SecondaryButton(btn_frame, text="Cancelar", command=self.destroy, width=84).pack(side="left")
         PrimaryButton(btn_frame, text="Salvar", command=self._save, width=100).pack(side="right")
 
     def _toggle_provider(self, val):
         if val == "gemini":
-            self.gemini_frame.pack(fill="x", padx=24)
+            self.gemini_frame.pack(fill="x", padx=18)
             self.ollama_frame.pack_forget()
         else:
             self.gemini_frame.pack_forget()
-            self.ollama_frame.pack(fill="x", padx=24)
+            self.ollama_frame.pack(fill="x", padx=18)
             self._refresh_ollama_models()
 
     def _refresh_ollama_models(self):
@@ -500,7 +500,7 @@ class ImportReposDialog(ctk.CTkToplevel):
     def __init__(self, parent, on_import):
         super().__init__(parent)
         self.title("Importar do GitHub")
-        self.geometry("620x580")
+        self.geometry("560x520")
         self.configure(fg_color=BG2)
         self.after(100, lambda: safe_grab(self))
         self.bind("<Escape>", lambda e: self.destroy())
@@ -508,33 +508,33 @@ class ImportReposDialog(ctk.CTkToplevel):
         self.repos = []
         self.checkboxes = []
         ctk.CTkFrame(self, fg_color=ACCENT, height=3, corner_radius=0).pack(fill="x")
-        ctk.CTkLabel(self, text="Importar Repositórios", font=FONT_H2, text_color=TEXT).pack(pady=(20, 4), padx=24, anchor="w")
+        ctk.CTkLabel(self, text="Importar Repositórios", font=FONT_H2, text_color=TEXT).pack(pady=(16, 4), padx=18, anchor="w")
         token = db.get_setting("github_token", "")
         if not token:
             ctk.CTkLabel(self, text="Configure seu GitHub Token em Configurações primeiro.",
-                         font=FONT_BODY, text_color=WARNING).pack(padx=24, pady=(20, 8))
+                         font=FONT_BODY, text_color=WARNING).pack(padx=18, pady=(16, 6))
             PrimaryButton(self, text="Abrir Configurações", font=FONT_SM,
-                          command=lambda: SettingsDialog(self, on_save=self.destroy)).pack(pady=(0, 20))
+                          command=lambda: SettingsDialog(self, on_save=self.destroy)).pack(pady=(0, 16))
             return
         self.status_label = ctk.CTkLabel(self, text="Carregando repositórios...",
                                           font=FONT_BODY, text_color=TEXT2)
-        self.status_label.pack(pady=8)
+        self.status_label.pack(pady=6)
         self.retry_btn = None
         search_frame = ctk.CTkFrame(self, fg_color="transparent")
-        search_frame.pack(fill="x", padx=24, pady=(0, 8))
+        search_frame.pack(fill="x", padx=18, pady=(0, 6))
         self.search_var = tk.StringVar()
         self.search_var.trace_add("write", self._filter)
         styled_entry(search_frame, placeholder_text="Filtrar repos...", textvariable=self.search_var,
-                     height=36).pack(fill="x")
-        self.scroll = ctk.CTkScrollableFrame(self, fg_color=BG3, corner_radius=10)
-        self.scroll.pack(fill="both", expand=True, padx=24, pady=(0, 8))
+                     height=30).pack(fill="x")
+        self.scroll = ctk.CTkScrollableFrame(self, fg_color=BG3, corner_radius=8)
+        self.scroll.pack(fill="both", expand=True, padx=18, pady=(0, 6))
         btn_frame = ctk.CTkFrame(self, fg_color="transparent")
-        btn_frame.pack(fill="x", padx=24, pady=(0, 16))
-        self.select_all_btn = SecondaryButton(btn_frame, text="Selecionar Todos", width=140,
+        btn_frame.pack(fill="x", padx=18, pady=(0, 14))
+        self.select_all_btn = SecondaryButton(btn_frame, text="Selecionar Todos", width=120,
                                                command=self._select_all)
         self.select_all_btn.pack(side="left")
         self.count_label = ctk.CTkLabel(btn_frame, text="", font=FONT_SM, text_color=TEXT2)
-        self.count_label.pack(side="left", padx=12)
+        self.count_label.pack(side="left", padx=10)
         PrimaryButton(btn_frame, text="Importar Selecionados", command=self._do_import).pack(side="right")
         threading.Thread(target=self._load_repos, args=(token,), daemon=True).start()
 
@@ -553,7 +553,7 @@ class ImportReposDialog(ctk.CTkToplevel):
         self.status_label.configure(text=f"Erro: {message}", text_color=DANGER)
         self.retry_btn = PrimaryButton(self, text="Atualizar Token", font=FONT_SM,
                                         command=self._reopen_settings)
-        self.retry_btn.pack(pady=(0, 8))
+        self.retry_btn.pack(pady=(0, 6))
 
     def _load_repos(self, token):
         try:
@@ -633,22 +633,22 @@ class ImportReposDialog(ctk.CTkToplevel):
 
 class ProjectCard(ctk.CTkFrame):
     def __init__(self, master, project: dict, on_click, on_delete, **kwargs):
-        super().__init__(master, fg_color=CARD, corner_radius=14, border_width=1,
+        super().__init__(master, fg_color=CARD, corner_radius=10, border_width=1,
                           border_color=BORDER, **kwargs)
         self.project = project
         color = project.get("color") or ACCENT
         total, done = db.get_task_stats(project["id"])
         progress = done / total if total > 0 else 0
 
-        top_bar = ctk.CTkFrame(self, fg_color=color, corner_radius=14, height=4)
+        top_bar = ctk.CTkFrame(self, fg_color=color, corner_radius=10, height=3)
         top_bar.pack(fill="x")
 
         content = ctk.CTkFrame(self, fg_color="transparent")
-        content.pack(fill="both", expand=True, padx=14, pady=12)
+        content.pack(fill="both", expand=True, padx=12, pady=10)
 
         header = ctk.CTkFrame(content, fg_color="transparent")
         header.pack(fill="x")
-        InitialsBadge(header, project["name"], color, size=30).pack(side="left", padx=(0, 10))
+        InitialsBadge(header, project["name"], color, size=26).pack(side="left", padx=(0, 8))
         title_box = ctk.CTkFrame(header, fg_color="transparent")
         title_box.pack(side="left", fill="x", expand=True)
         ctk.CTkLabel(title_box, text=project["name"], font=FONT_H3, text_color=TEXT,
@@ -662,32 +662,32 @@ class ProjectCard(ctk.CTkFrame):
         if desc:
             short = truncate(desc, 70)
             ctk.CTkLabel(content, text=short, font=FONT_SM, text_color=TEXT2,
-                         anchor="w", wraplength=220, justify="left").pack(anchor="w", pady=(10, 0))
+                         anchor="w", wraplength=220, justify="left").pack(anchor="w", pady=(6, 0))
 
         meta_row = ctk.CTkFrame(content, fg_color="transparent")
-        meta_row.pack(fill="x", pady=(10, 0))
+        meta_row.pack(fill="x", pady=(6, 0))
         if project.get("language"):
             Tag(meta_row, project["language"], color).pack(side="left")
         if project.get("stars", 0) > 0:
             Tag(meta_row, f"★ {project['stars']}", WARNING).pack(side="left", padx=(6, 0))
 
         prog_frame = ctk.CTkFrame(content, fg_color="transparent")
-        prog_frame.pack(fill="x", pady=(12, 0))
+        prog_frame.pack(fill="x", pady=(8, 0))
         ctk.CTkLabel(prog_frame, text=f"{done}/{total} tarefas",
                      font=FONT_XS, text_color=TEXT3).pack(side="right")
-        bar_bg = ctk.CTkFrame(prog_frame, fg_color=BG3, corner_radius=4, height=6)
+        bar_bg = ctk.CTkFrame(prog_frame, fg_color=BG3, corner_radius=3, height=5)
         bar_bg.pack(fill="x", side="left", expand=True, padx=(0, 8), pady=6)
         if progress > 0:
             bar_fg = ctk.CTkFrame(bar_bg, fg_color=SUCCESS if progress == 1 else color,
-                                   corner_radius=4, height=6)
+                                   corner_radius=3, height=5)
             bar_fg.place(relwidth=progress, relheight=1)
 
         btn_row = ctk.CTkFrame(content, fg_color="transparent")
-        btn_row.pack(fill="x", pady=(12, 0))
+        btn_row.pack(fill="x", pady=(8, 0))
         SecondaryButton(btn_row, text="Abrir →", hover_color=ACCENT, text_color=TEXT,
-                        height=30, font=FONT_SM,
+                        height=26, font=FONT_SM,
                         command=lambda: on_click(project)).pack(side="left", fill="x", expand=True, padx=(0, 6))
-        DangerButton(btn_row, text="✕", width=30, height=30,
+        DangerButton(btn_row, text="✕", width=26, height=26,
                      command=lambda: on_delete(project)).pack(side="right")
 
         for w in (self, content, header, title_box):
@@ -713,11 +713,11 @@ class ProjectView(ctk.CTkFrame):
         header = ctk.CTkFrame(self, fg_color=BG2, corner_radius=0)
         header.pack(fill="x")
         inner = ctk.CTkFrame(header, fg_color="transparent")
-        inner.pack(fill="x", padx=24, pady=14)
+        inner.pack(fill="x", padx=18, pady=10)
         GhostButton(inner, text="← Projetos", hover_color=CARD2,
-                    font=FONT_SM, command=self.on_back, width=100).pack(side="left")
+                    font=FONT_SM, command=self.on_back, width=84).pack(side="left")
         title_frame = ctk.CTkFrame(inner, fg_color="transparent")
-        title_frame.pack(side="left", padx=16, fill="x", expand=True)
+        title_frame.pack(side="left", padx=12, fill="x", expand=True)
         ctk.CTkLabel(title_frame, text=truncate(self.project["name"], 60), font=FONT_H2,
                      text_color=TEXT, anchor="w").pack(anchor="w", fill="x")
         meta_bits = []
@@ -765,31 +765,31 @@ class TasksPanel(ctk.CTkFrame):
 
     def _build(self):
         toolbar = ctk.CTkFrame(self, fg_color="transparent")
-        toolbar.pack(fill="x", padx=24, pady=16)
+        toolbar.pack(fill="x", padx=18, pady=12)
         SectionLabel(toolbar, "Tarefas").pack(side="left")
         self.filter_var = ctk.StringVar(value="all")
         filter_btn = ctk.CTkSegmentedButton(toolbar, values=["all", "todo", "doing", "done"],
                                              variable=self.filter_var, fg_color=BG3,
                                              selected_color=ACCENT, text_color=TEXT,
-                                             font=FONT_SM, command=self._refresh)
-        filter_btn.pack(side="left", padx=12)
+                                             font=FONT_SM, command=self._refresh, height=26)
+        filter_btn.pack(side="left", padx=10)
         PrimaryButton(toolbar, text="+ Tarefa", font=FONT_SM, command=self._add_task).pack(side="right")
         total, done = db.get_task_stats(self.project["id"])
         pct = int(done / total * 100) if total > 0 else 0
         prog_card = CardFrame(self)
-        prog_card.pack(fill="x", padx=24, pady=(0, 12))
+        prog_card.pack(fill="x", padx=18, pady=(0, 10))
         prog_inner = ctk.CTkFrame(prog_card, fg_color="transparent")
-        prog_inner.pack(fill="x", padx=16, pady=12)
+        prog_inner.pack(fill="x", padx=12, pady=9)
         ctk.CTkLabel(prog_inner, text=f"Progresso: {done}/{total} tarefas ({pct}%)",
                      font=FONT_BODY, text_color=TEXT).pack(side="left")
-        bar_bg = ctk.CTkFrame(prog_inner, fg_color=BG3, corner_radius=6, height=10)
-        bar_bg.pack(side="right", fill="x", expand=True, padx=(16, 0))
+        bar_bg = ctk.CTkFrame(prog_inner, fg_color=BG3, corner_radius=5, height=8)
+        bar_bg.pack(side="right", fill="x", expand=True, padx=(12, 0))
         if pct > 0:
             bar_fg = ctk.CTkFrame(bar_bg, fg_color=SUCCESS if pct == 100 else ACCENT,
-                                   corner_radius=6, height=10)
+                                   corner_radius=5, height=8)
             bar_fg.place(relwidth=pct / 100, relheight=1)
         self.scroll = ctk.CTkScrollableFrame(self, fg_color="transparent")
-        self.scroll.pack(fill="both", expand=True, padx=24)
+        self.scroll.pack(fill="both", expand=True, padx=18)
         self._refresh()
 
     def _refresh(self, *_):
@@ -826,13 +826,14 @@ class TaskRow(ctk.CTkFrame):
                                   width=4, corner_radius=10)
         color_bar.pack(side="left", fill="y")
         content = ctk.CTkFrame(self, fg_color="transparent")
-        content.pack(side="left", fill="both", expand=True, padx=12, pady=8)
+        content.pack(side="left", fill="both", expand=True, padx=10, pady=6)
         row1 = ctk.CTkFrame(content, fg_color="transparent")
         row1.pack(fill="x")
         done_var = tk.BooleanVar(value=task["status"] == "done")
         cb = ctk.CTkCheckBox(row1, text="", variable=done_var, fg_color=SUCCESS,
                               hover_color=SUCCESS, border_color=BORDER_LIGHT,
-                              width=20, command=lambda: self._toggle_done(done_var.get()))
+                              width=18, checkbox_width=18, checkbox_height=18,
+                              command=lambda: self._toggle_done(done_var.get()))
         cb.pack(side="left")
         title_color = TEXT3 if task["status"] == "done" else TEXT
         ctk.CTkLabel(row1, text=task["title"], font=FONT_BODY,
@@ -877,23 +878,23 @@ class NotesPanel(ctk.CTkFrame):
 
     def _build(self):
         toolbar = ctk.CTkFrame(self, fg_color="transparent")
-        toolbar.pack(fill="x", padx=24, pady=16)
+        toolbar.pack(fill="x", padx=18, pady=12)
         SectionLabel(toolbar, "Notas").pack(side="left")
         main = ctk.CTkFrame(self, fg_color="transparent")
-        main.pack(fill="both", expand=True, padx=24)
+        main.pack(fill="both", expand=True, padx=18)
         main.columnconfigure(0, weight=1)
         main.columnconfigure(1, weight=2)
         main.rowconfigure(0, weight=1)
         left = CardFrame(main)
         left.grid(row=0, column=0, sticky="nsew", padx=(0, 8))
         ctk.CTkLabel(left, text="Notas salvas", font=FONT_H3,
-                     text_color=TEXT2).pack(padx=12, pady=10, anchor="w")
+                     text_color=TEXT2).pack(padx=10, pady=8, anchor="w")
         self.note_scroll = ctk.CTkScrollableFrame(left, fg_color="transparent")
-        self.note_scroll.pack(fill="both", expand=True, padx=8, pady=(0, 8))
+        self.note_scroll.pack(fill="both", expand=True, padx=6, pady=(0, 6))
         right = CardFrame(main)
         right.grid(row=0, column=1, sticky="nsew")
         ctk.CTkLabel(right, text="Nova nota", font=FONT_H3,
-                     text_color=TEXT2).pack(padx=12, pady=10, anchor="w")
+                     text_color=TEXT2).pack(padx=10, pady=8, anchor="w")
         self.editor = styled_textbox(right, font=FONT_MONO)
         self.editor.pack(fill="both", expand=True, padx=12, pady=(0, 8))
         PrimaryButton(right, text="Salvar Nota", command=self._save_note).pack(padx=12, pady=(0, 12))
@@ -950,14 +951,14 @@ class AIPanel(ctk.CTkFrame):
 
     def _build(self):
         header = ctk.CTkFrame(self, fg_color="transparent")
-        header.pack(fill="x", padx=24, pady=16)
+        header.pack(fill="x", padx=18, pady=12)
         SectionLabel(header, "Assistente IA").pack(side="left")
         provider = db.get_setting("ai_provider", "gemini")
         model = (ai.get_ollama_model() or "nenhum modelo") if provider == "ollama" else "Gemini Flash"
         Tag(header, f"{provider} · {truncate(model, 24)}", ACCENT).pack(side="left", padx=8)
-        DangerButton(header, text="Limpar", height=28, command=self._clear_chat).pack(side="right")
+        DangerButton(header, text="Limpar", height=24, command=self._clear_chat).pack(side="right")
         quick = ctk.CTkFrame(self, fg_color="transparent")
-        quick.pack(fill="x", padx=24, pady=(0, 10))
+        quick.pack(fill="x", padx=18, pady=(0, 8))
         prompts = [
             ("📋 Criar tarefas", "Analise este projeto e crie uma lista de tarefas prioritárias que eu deveria fazer agora."),
             ("🔍 Revisar status", "Me dê um resumo do status atual do projeto e o que falta para finalizar."),
@@ -966,13 +967,13 @@ class AIPanel(ctk.CTkFrame):
         ]
         for label, prompt in prompts:
             SecondaryButton(quick, text=label, hover_color=ACCENT, text_color=TEXT2,
-                            height=30, font=FONT_SM,
+                            height=26, font=FONT_SM,
                             command=lambda p=prompt: self._quick_send(p)).pack(side="left", padx=(0, 6))
-        self.chat_scroll = ctk.CTkScrollableFrame(self, fg_color=BG2, corner_radius=10)
-        self.chat_scroll.pack(fill="both", expand=True, padx=24, pady=(0, 8))
+        self.chat_scroll = ctk.CTkScrollableFrame(self, fg_color=BG2, corner_radius=8)
+        self.chat_scroll.pack(fill="both", expand=True, padx=18, pady=(0, 6))
         input_frame = CardFrame(self)
-        input_frame.pack(fill="x", padx=24, pady=(0, 16))
-        self.input_box = styled_textbox(input_frame, height=70, border_width=0)
+        input_frame.pack(fill="x", padx=18, pady=(0, 12))
+        self.input_box = styled_textbox(input_frame, height=60, border_width=0)
         self.input_box.pack(fill="x", padx=8, pady=8)
         self.input_box.bind("<Control-Return>", self._send)
         btn_row = ctk.CTkFrame(input_frame, fg_color="transparent")
@@ -1008,12 +1009,12 @@ class AIPanel(ctk.CTkFrame):
             show_toast(bubble, f"{len(tasks)} tarefas adicionadas ao projeto!")
         SecondaryButton(bubble, text=f"+ Adicionar {len(tasks)} tarefas", hover_color=SUCCESS,
                         text_color=SUCCESS, height=28, font=FONT_SM,
-                        command=add_tasks).pack(padx=14, pady=(0, 10), anchor="w")
+                        command=add_tasks).pack(padx=12, pady=(0, 8), anchor="w")
 
     def _render_message(self, role, content):
         bubble = self._new_bubble(role)
         ctk.CTkLabel(bubble, text=content, font=FONT_BODY, text_color=TEXT,
-                     wraplength=440, justify="left", anchor="w").pack(padx=14, pady=10, fill="x")
+                     wraplength=420, justify="left", anchor="w").pack(padx=12, pady=8, fill="x")
         if role == "assistant" and "- " in content:
             tasks = ai.parse_ai_tasks(content)
             if tasks:
@@ -1034,8 +1035,8 @@ class AIPanel(ctk.CTkFrame):
         self.send_btn.configure(state="disabled", text="...")
         ai_bubble = self._new_bubble("assistant")
         resp_label = ctk.CTkLabel(ai_bubble, text="▋", font=FONT_BODY, text_color=TEXT,
-                                   wraplength=440, justify="left", anchor="w")
-        resp_label.pack(padx=14, pady=10, fill="x")
+                                   wraplength=420, justify="left", anchor="w")
+        resp_label.pack(padx=12, pady=8, fill="x")
 
         def stream():
             tasks = db.get_tasks(self.project["id"])
@@ -1090,15 +1091,15 @@ class App(ctk.CTk):
         self._show_projects()
 
     def _build_sidebar(self):
-        self.sidebar = ctk.CTkFrame(self, fg_color=BG2, width=220, corner_radius=0)
+        self.sidebar = ctk.CTkFrame(self, fg_color=BG2, width=196, corner_radius=0)
         self.sidebar.pack(side="left", fill="y")
         self.sidebar.pack_propagate(False)
         logo = ctk.CTkFrame(self.sidebar, fg_color="transparent")
-        logo.pack(fill="x", padx=16, pady=(20, 8))
-        self._logo_photo = image_to_photo(self._mark, (28, 28))
+        logo.pack(fill="x", padx=14, pady=(16, 6))
+        self._logo_photo = image_to_photo(self._mark, (24, 24))
         ctk.CTkLabel(logo, text="", image=self._logo_photo).pack(side="left")
-        ctk.CTkLabel(logo, text="Projects", font=FONT_H2, text_color=TEXT).pack(side="left", padx=8)
-        ctk.CTkFrame(self.sidebar, fg_color=BORDER, height=1).pack(fill="x", padx=16, pady=8)
+        ctk.CTkLabel(logo, text="Projects", font=FONT_H2, text_color=TEXT).pack(side="left", padx=6)
+        ctk.CTkFrame(self.sidebar, fg_color=BORDER, height=1).pack(fill="x", padx=14, pady=6)
         self.nav_buttons = {}
         nav_items = [
             ("projects", "🗂  Projetos", self._show_projects),
@@ -1106,16 +1107,16 @@ class App(ctk.CTk):
             ("import", "⬇  Importar GitHub", self._import_github),
         ]
         for key, label, cmd in nav_items:
-            btn = GhostButton(self.sidebar, text=label, font=FONT_BODY, anchor="w", height=40,
+            btn = GhostButton(self.sidebar, text=label, font=FONT_BODY, anchor="w", height=34,
                                command=cmd)
-            btn.pack(fill="x", padx=8, pady=2)
+            btn.pack(fill="x", padx=6, pady=1)
             self.nav_buttons[key] = btn
-        ctk.CTkFrame(self.sidebar, fg_color=BORDER, height=1).pack(fill="x", padx=16, pady=8)
-        GhostButton(self.sidebar, text="⚙  Configurações", font=FONT_BODY, anchor="w", height=40,
-                    command=self._open_settings).pack(fill="x", padx=8, pady=2, side="bottom")
+        ctk.CTkFrame(self.sidebar, fg_color=BORDER, height=1).pack(fill="x", padx=14, pady=6)
+        GhostButton(self.sidebar, text="⚙  Configurações", font=FONT_BODY, anchor="w", height=34,
+                    command=self._open_settings).pack(fill="x", padx=6, pady=1, side="bottom")
         self.ai_label = ctk.CTkLabel(self.sidebar, text="", font=FONT_SM, text_color=TEXT3,
-                                      wraplength=190, justify="center")
-        self.ai_label.pack(side="bottom", pady=4, padx=8)
+                                      wraplength=170, justify="center")
+        self.ai_label.pack(side="bottom", pady=3, padx=6)
         self._update_ai_label()
 
     def _set_active_nav(self, key):
@@ -1140,29 +1141,29 @@ class App(ctk.CTk):
         self._set_active_nav("projects")
         projects = db.get_projects()
         header = ctk.CTkFrame(self.main, fg_color="transparent")
-        header.pack(fill="x", padx=28, pady=(24, 4))
+        header.pack(fill="x", padx=22, pady=(18, 4))
         ctk.CTkLabel(header, text="Projetos", font=FONT_H1, text_color=TEXT).pack(side="left")
         ctk.CTkLabel(header, text=f"{len(projects)} projetos",
-                     font=FONT_BODY, text_color=TEXT3).pack(side="left", padx=12)
+                     font=FONT_BODY, text_color=TEXT3).pack(side="left", padx=10)
         search_frame = ctk.CTkFrame(self.main, fg_color="transparent")
-        search_frame.pack(fill="x", padx=28, pady=(0, 14))
+        search_frame.pack(fill="x", padx=22, pady=(0, 10))
         self.search_var = tk.StringVar()
         self.search_var.trace_add("write", lambda *_: self._filter_projects(projects))
         styled_entry(search_frame, placeholder_text="Buscar projetos...",
-                     textvariable=self.search_var, height=38).pack(fill="x")
+                     textvariable=self.search_var, height=32).pack(fill="x")
         self.proj_scroll = ctk.CTkScrollableFrame(self.main, fg_color="transparent")
-        self.proj_scroll.pack(fill="both", expand=True, padx=28)
+        self.proj_scroll.pack(fill="both", expand=True, padx=22)
         if not projects:
             empty = ctk.CTkFrame(self.proj_scroll, fg_color="transparent")
-            empty.pack(expand=True, pady=80)
-            empty_photo = image_to_photo(self._mark, (56, 56))
+            empty.pack(expand=True, pady=60)
+            empty_photo = image_to_photo(self._mark, (48, 48))
             ctk.CTkLabel(empty, text="", image=empty_photo).pack()
             ctk.CTkLabel(empty, text="Nenhum projeto ainda.",
-                         font=FONT_H2, text_color=TEXT3).pack(pady=8)
+                         font=FONT_H2, text_color=TEXT3).pack(pady=6)
             ctk.CTkLabel(empty, text="Importe do GitHub ou crie um novo projeto.",
                          font=FONT_BODY, text_color=TEXT3).pack()
             PrimaryButton(empty, text="⬇ Importar do GitHub", font=FONT_BODY,
-                         command=self._import_github).pack(pady=16)
+                         command=self._import_github).pack(pady=12)
             return
         self._render_project_grid(projects)
 
