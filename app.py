@@ -44,15 +44,27 @@ FONT_MONO = ("JetBrains Mono", 11)
 
 
 def generate_mark(size=256):
+    """Mirrors assets/icon.svg: two overlapping rounded squares with a checkmark."""
     img = Image.new("RGBA", (size, size), (0, 0, 0, 0))
     draw = ImageDraw.Draw(img)
-    pad = size * 0.07
-    draw.rounded_rectangle([pad, pad, size - pad, size - pad], radius=size * 0.24, fill=ACCENT)
-    cx, cy, d = size / 2, size / 2, size * 0.46
-    draw.polygon(
-        [(cx, cy - d / 2), (cx + d / 2, cy), (cx, cy + d / 2), (cx - d / 2, cy)],
-        fill=SECONDARY,
-    )
+    radius = size * 0.133
+
+    back = (size * 0.281, size * 0.281, size * 0.867, size * 0.867)
+    draw.rounded_rectangle(back, radius=radius, fill=SECONDARY)
+
+    front = (size * 0.133, size * 0.133, size * 0.719, size * 0.719)
+    draw.rounded_rectangle(front, radius=radius, fill=ACCENT)
+
+    check = [
+        (size * 0.273, size * 0.438),
+        (size * 0.406, size * 0.570),
+        (size * 0.648, size * 0.305),
+    ]
+    width = max(2, round(size * 0.0625))
+    draw.line(check, fill="#ffffff", width=width, joint="curve")
+    r = width / 2
+    for x, y in check:
+        draw.ellipse((x - r, y - r, x + r, y + r), fill="#ffffff")
     return img
 
 
